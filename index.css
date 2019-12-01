@@ -1,0 +1,195 @@
+:root {
+    --menu-bg: #ddd;
+    --menu-br: #000;
+    --view-bg: #eee;
+    --view-br: #000;
+    --list-bg: #eee;
+    --list-br: #000;
+    --list-name-bg: #fff;
+    --list-width: 12.5vw;
+    --show-count: 7;
+    --show-width: calc(calc(100vw - var(--list-width) - 2px) / var(--show-count));
+    --side-bg: chocolate;
+    --side-br: darkred;
+    --side-pd: 0.75em;
+    --task-pad-bg: brown;
+    --task-pad-br: #000;
+    --data-fmt-bg: #eee;
+    --data-fmt-br: #333;
+}
+html, body {
+    height: 100%;
+    font-family: monospace, cursive;
+}
+body {
+    margin: 0;
+}
+.flex {
+    display: flex;
+}
+.flex-row {
+    flex-direction: row;
+}
+.flex-column {
+    flex-direction: column;
+}
+.flex-fill {
+    flex-grow: 1;
+}
+#menu {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    line-height: 2;
+    height: 2em;
+    border: 1px solid var(--menu-br);
+    border-top: none;
+    background-color: var(--menu-bg);
+    padding: 0 0.5em;
+    z-index: 1;
+}
+label[for="DateFormat"] {
+    display: inline-flex;
+    justify-content: space-between;
+    position: relative;
+    width: 150px;
+    line-height: 1.5;
+    height: 1.5em;
+    border-radius: 1em;
+    background-color: var(--data-fmt-bg);
+}
+label[for="DateFormat"] > span::before {
+    width: 1em;
+    content: attr(date-text);
+    display: inline-block;
+    text-align: center;
+}
+label[for="DateFormat"] > span:first-of-type {
+    margin-left: 4px;
+}
+label[for="DateFormat"] > span:last-of-type {
+    margin-right: 4px;
+}
+#DateFormat {
+    -webkit-appearance: none;
+    margin: 0;
+    position: absolute;
+    width: 100%;
+    border-radius: 1em;
+    background-color: transparent;
+}
+#DateFormat:focus {
+    box-shadow: 0 0 0 1px rgb(77 , 144, 254);
+    outline: none;
+}
+#DateFormat::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: calc(1.5em + 4px);
+    height: calc(1.5em + 4px);
+    border: 1px solid var(--data-fmt-br);
+    border-radius: 1em;
+}
+.container {
+    width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+#view {
+    padding-top: 2em;
+    background-color: var(--view-bg);
+    box-shadow: inset 0 0 0 1px var(--view-br);
+}
+#tasks-list {
+    min-width: var(--list-width);
+    max-width: var(--list-width);
+    padding-top: 2em;
+    border: 1px solid var(--list-br);
+    background-color: var(--list-bg);
+}
+#tasks-list *[data-task-name] {
+    line-height: 2;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0 0.5em;
+    border-bottom: 1px solid var(--list-br);
+    background-color: var(--list-name-bg);
+}
+#tasks-list *[data-task-name]::before {
+    content: attr(data-task-name);
+}
+#tasks-list *[data-task-name]:nth-child(1) {
+    border-top: 1px solid var(--list-br);
+}
+.tasks-container {
+    clip-path: inset(0);
+    overflow-x: hidden;
+}
+#tasks-view {
+    height: 100%;
+    position: relative;
+    user-select: none;
+}
+#tasks-view * {
+    user-select: auto;
+}
+.task {
+    min-width: var(--show-width);
+    max-width: var(--show-width);
+}
+.task-date {
+    position: fixed;
+    width: calc(var(--show-width) - 1px);
+    line-height: 2;
+    outline: 1px solid #000;
+    margin-top: 1px;
+    text-align: center;
+}
+.task-date::before {
+    content: attr(data-date);
+}
+.task-fill {
+    height: 100%;
+    border: 1px solid #000;
+    border-left-width: 0;
+    padding-top: calc(2em + 1px);
+    box-sizing: border-box;
+}
+#task-side {
+    position: fixed;
+    right: 0;
+    top: 2em;
+    bottom: 0;
+    width: 0;
+    border: 0 solid var(--side-br);
+    background-color: var(--side-bg);
+    padding: 0;
+    transition-property: width, border-width, padding;
+    transition-duration: 0.25s;
+}
+#task-side.show {
+    width: 25vw;
+    padding: var(--side-pd);
+    border-width: 1px;
+}
+/*#task-side.show::-webkit-scrollbar {
+    display: none;
+}*/
+.task-pad {
+    margin-bottom: var(--side-pd);
+    border: 1px solid var(--task-pad-br);
+    background-color: var(--task-pad-bg);
+    width: 100%;
+    height: 500px;
+    opacity: 1;
+    transition-duration: 0.25s;
+    transition-property: opacity;
+}
+#task-side:not(.show) > .task-pad {
+    opacity: 0;
+}
+#task-side > .task-pad:last-of-type {
+    margin-bottom: 0;
+}

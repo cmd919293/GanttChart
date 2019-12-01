@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, minimum-scale=0.1">
+<title>None</title>
+<script type="text/javascript" src="./index.js" charset="utf-8"></script>
+<link href="./index.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div id="menu">
+        <input type="number" min="1" max="10" value="7" id="numTasks"/>
+        <button id="ShowAddTask">Show Add Task</button>
+        <label for="DateFormat">
+            <input type="range" id="DateFormat" min="0" max="2" value="0"/>
+            <span date-text="天"></span>
+            <span date-text="週"></span>
+            <span date-text="月"></span>
+        </label>
+    </div>
+    <div id="view" class="container flex flex-row flex-fill">
+        <div id="tasks-list" class="flex flex-column"></div>
+        <div class="container tasks-container">
+            <div id="tasks-view" class="flex"></div>
+        </div>
+        <div id='task-side'>
+            <div class="task-pad"></div>
+            <div class="task-pad"></div>
+        </div>
+    </div>
+</body>
+</html>

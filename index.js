@@ -3,52 +3,65 @@ Element.prototype.drag = function(cfg) {
     let flag = false;
     let x, y;
     let mx, my;
-    let target = null;
-    this.addEventListener('mousedown', function(e) {
-        if (e.which == 1) {
-            if (typeof (cfg.bind) === "function") {
-                target = cfg.bind.call(this, e) || e.currentTarget;
-            } else {
-                target = e.currentTarget;
-            }
-            if (typeof (cfg.filter) === 'function') {
-                if (!cfg.filter.call(this, e))
-                    return;
-            }
-            let position = target.getComputedValue('position');
-            if (!["relative", "fixed", "absolute"].includes(position)) {
-                target.style.position = "relative";
-            }
-            mx = my = 0;
-            x = e.clientX;
-            y = e.clientY;
-            flag = true;
+    let target = this;
+    function drag_start(e) {
+        if (typeof (cfg.bind) === "function") {
+            target = cfg.bind.call(this, e) || target;
         }
+        if (typeof (cfg.filter) === 'function') {
+            if (!cfg.filter.call(this, e))
+                return;
+        }
+        let position = target.getComputedValue('position');
+        if (!["relative", "fixed", "absolute"].includes(position)) {
+            target.style.position = "relative";
+        }
+        mx = my = 0;
+        x = e.clientX;
+        y = e.clientY;
+        flag = true;
+    }
+    function drag_end(e) {
+        flag = false;
+    }
+    function dragging(e) {
+        if (!flag) return;
+        let nx = e.clientX, ny = e.clientY;
+        let ox = nx - x, oy = ny - y;
+        if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
+            mx += ox;
+            target.posX += ox;
+        }
+        if (cfg.axis == undefined || cfg.axis == 'y' || cfg.axis == 'Y') {
+            my += oy;
+            target.posY += oy;
+        }
+        if (typeof (cfg.callback) === "function") {
+            cfg.callback.call(target, {
+                'offsetX': mx,
+                'offsetY': oy
+            });
+        }
+        x = nx;
+        y = ny;
+    }
+    this.addEventListener('mousedown', function(e) {
+        if (e.which == 1) drag_start(e);
     });
     this.addEventListener('mouseup', function(e) {
-        if (e.which == 1) flag = false;
+        if (e.which == 1) drag_end();
     })
     this.addEventListener('mousemove', function(e) {
-        if (e.which == 1 && flag) {
-            let nx = e.clientX, ny = e.clientY;
-            let ox = nx - x, oy = ny - y;
-            if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
-                mx += ox;
-                target.posX += ox;
-            }
-            if (cfg.axis == undefined || cfg.axis == 'y' || cfg.axis == 'Y') {
-                my += oy;
-                target.posY += oy;
-            }
-            if (typeof (cfg.callback) === "function") {
-                cfg.callback.call(target, {
-                    'offsetX': mx,
-                    'offsetY': oy
-                });
-            }
-            x = nx;
-            y = ny;
-        }
+        if (e.which == 1) dragging(e);
+    });
+    this.addEventListener('touchstart', function(e) {
+       drag_start(e.targetTouches[0]); 
+    });
+    this.addEventListener('touchend', function(e) {
+       drag_end(e.targetTouches[0]); 
+    });
+    this.addEventListener('touchmove', function(e) {
+       dragging(e.targetTouches[0]); 
     });
 }
 Element.prototype.getComputedValue = function(property) {

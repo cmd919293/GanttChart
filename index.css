@@ -1,6 +1,7 @@
 :root {
     --menu-bg: #ddd;
     --menu-br: #000;
+    --menu-hi: 2em;
     --view-bg: #eee;
     --view-br: #000;
     --list-bg: #eee;
@@ -19,9 +20,6 @@
 }
 html, body {
     height: 100%;
-}
-*::before {
-    font-family: monospace, cursive;
 }
 body {
     margin: 0;
@@ -44,8 +42,8 @@ body {
     left: 0;
     right: 0;
     top: 0;
-    line-height: 2;
-    height: 2em;
+    line-height: var(--menu-hi);
+    height: var(--menu-hi);
     border: 1px solid var(--menu-br);
     border-top: none;
     background-color: var(--menu-bg);
@@ -99,7 +97,7 @@ label[for="DateFormat"] > span:last-of-type {
     box-sizing: border-box;
 }
 #view {
-    padding-top: 2em;
+    padding-top: var(--menu-hi);
     background-color: var(--view-bg);
     box-shadow: inset 0 0 0 1px var(--view-br);
 }
@@ -163,7 +161,7 @@ label[for="DateFormat"] > span:last-of-type {
 #task-side {
     position: fixed;
     right: 0;
-    top: 2em;
+    top: var(--menu-hi);
     bottom: 0;
     width: 0;
     border: 0 solid var(--side-br);

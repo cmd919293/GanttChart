@@ -17,8 +17,13 @@ Element.prototype.drag = function(cfg) {
             target.style.position = "relative";
         }
         mx = my = 0;
-        x = e.clientX;
-        y = e.clientY;
+        if ('targetTouches' in e) {
+            x = e.targetTouches[0].clientX;
+            y = e.targetTouches[0].clientY;
+        } else {
+            x = e.clientX;
+            y = e.clientY;
+        }
         flag = true;
     }
     function drag_end(e) {
@@ -26,7 +31,14 @@ Element.prototype.drag = function(cfg) {
     }
     function dragging(e) {
         if (!flag) return;
-        let nx = e.clientX, ny = e.clientY;
+        let nx, ny;
+        if ('targetTouches' in e) {
+            nx = e.targetTouches[0].clientX;
+            ny = e.targetTouches[0].clientY;
+        } else {
+            nx = e.clientX;
+            ny = e.clientY;
+        }
         let ox = nx - x, oy = ny - y;
         if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
             mx += ox;
@@ -44,6 +56,7 @@ Element.prototype.drag = function(cfg) {
         }
         x = nx;
         y = ny;
+        e.returnValue = false;
     }
     this.addEventListener('mousedown', function(e) {
         if (e.which == 1) drag_start(e);
@@ -55,13 +68,13 @@ Element.prototype.drag = function(cfg) {
         if (e.which == 1) dragging(e);
     });
     this.addEventListener('touchstart', function(e) {
-       drag_start(e.targetTouches[0]); 
+       drag_start(e); 
     });
     this.addEventListener('touchend', function(e) {
-       drag_end(e.targetTouches[0]); 
+       drag_end(e); 
     });
     this.addEventListener('touchmove', function(e) {
-       dragging(e.targetTouches[0]); 
+       dragging(e); 
     });
 }
 Element.prototype.getComputedValue = function(property) {

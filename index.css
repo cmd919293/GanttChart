@@ -23,6 +23,7 @@ html, body {
 }
 body {
     margin: 0;
+    overscroll-behavior-y: contain;
 }
 .flex {
     display: flex;
@@ -174,9 +175,6 @@ label[for="DateFormat"] > span:last-of-type {
     padding: var(--side-pd);
     border-width: 1px;
 }
-/*#task-side.show::-webkit-scrollbar {
-    display: none;
-}*/
 .task-pad {
     margin-bottom: var(--side-pd);
     border: 1px solid var(--task-pad-br);

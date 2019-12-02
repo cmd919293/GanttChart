@@ -19,7 +19,6 @@
 }
 html, body {
     height: 100%;
-    font-family: monospace, cursive;
 }
 body {
     margin: 0;
@@ -119,6 +118,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: var(--list-name-bg);
 }
 #tasks-list *[data-task-name]::before {
+    font-family: monospace;
     content: attr(data-task-name);
 }
 #tasks-list *[data-task-name]:nth-child(1) {
@@ -149,6 +149,7 @@ label[for="DateFormat"] > span:last-of-type {
     text-align: center;
 }
 .task-date::before {
+    font-family: monospace;
     content: attr(data-date);
 }
 .task-fill {

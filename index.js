@@ -146,6 +146,31 @@ function TaskController() {
             tmp.push(...v.Tasks);
         }
     }
+    
+    function TaskPad() {
+        let pad = document.createElement('div');
+        pad.classList.add('task-pad');
+        let icon = document.createElement('div');
+        icon.classList.add('drag-icon');
+        pad.append(icon);
+        let dict = [
+            ['Name', 'input', {type:'text'}],
+            ['Start', 'input', {type:'date'}],
+            ['Duration', 'input', {type:'number', min:'0'}],
+            ['End', 'input', {type:'date'}],
+            ['Description', 'textarea']
+        ];
+        pad.append(icon, ...dict.map(a => {
+            let label = document.createElement('label');
+            let span = document.createElement('span');
+            let ele = document.createElement(a[1]);
+            span.textContent = a[0];
+            Object.entries(a[2] || {}).forEach(i => ele.setAttribute(...i));
+            label.append(span, ele);
+            return label;
+        }));
+        return pad;
+    }
 
     function GetTaskBar(task) {
         let ele = document.createElement('span');
@@ -175,10 +200,17 @@ function TaskController() {
         tasksData["Name"] = "Gantt Chart";
     }
 
+    function PadTest(n=2) {
+        let view = document.getElementById('task-side');
+        for(let i = 0; i < n; i++) {
+            view.append(TaskPad());
+        }
+    }
     return {
         "List": List,
         "Show": Show,
-        "Test": Test
+        "Test": Test,
+        "AddPad": PadTest
     }
 }
 
@@ -265,6 +297,7 @@ addEventListener('load', function() {
     let task = new TaskController();
     task.Test(26);
     task.List();
+    task.AddPad(3);
     let date = new DateController();
     date.Switch();
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);

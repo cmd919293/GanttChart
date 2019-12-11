@@ -3,13 +3,14 @@ Element.prototype.drag = function(cfg) {
     let flag = false;
     let x, y;
     let mx, my;
+    let origin = this;
     let target = this;
     function drag_start(e) {
         if (typeof (cfg.bind) === "function") {
-            target = cfg.bind.call(this, e) || target;
+            target = cfg.bind.call(origin, e) || target;
         }
         if (typeof (cfg.filter) === 'function') {
-            if (!cfg.filter.call(this, e))
+            if (!cfg.filter.call(origin, e))
                 return;
         }
         let position = target.getComputedValue('position');
@@ -26,55 +27,56 @@ Element.prototype.drag = function(cfg) {
         }
         flag = true;
     }
-    function drag_end(e) {
-        flag = false;
-    }
     function dragging(e) {
-        if (!flag) return;
-        let nx, ny;
-        if ('targetTouches' in e) {
-            nx = e.targetTouches[0].clientX;
-            ny = e.targetTouches[0].clientY;
-        } else {
-            nx = e.clientX;
-            ny = e.clientY;
+        if (flag && ((e instanceof TouchEvent) || e.which == 1)) {
+            let nx, ny;
+            if ('targetTouches' in e) {
+                nx = e.targetTouches[0].clientX;
+                ny = e.targetTouches[0].clientY;
+            } else {
+                nx = e.clientX;
+                ny = e.clientY;
+            }
+            let ox = nx - x, oy = ny - y;
+            if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
+                mx += ox;
+                target.posX += ox;
+            }
+            if (cfg.axis == undefined || cfg.axis == 'y' || cfg.axis == 'Y') {
+                my += oy;
+                target.posY += oy;
+            }
+            if (typeof (cfg.callback) === "function") {
+                cfg.callback.call(target, {
+                    'offsetX': mx,
+                    'offsetY': my
+                });
+            }
+            x = nx;
+            y = ny;
+        } else if (flag) {
+            flag = false;
         }
-        let ox = nx - x, oy = ny - y;
-        if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
-            mx += ox;
-            target.posX += ox;
-        }
-        if (cfg.axis == undefined || cfg.axis == 'y' || cfg.axis == 'Y') {
-            my += oy;
-            target.posY += oy;
-        }
-        if (typeof (cfg.callback) === "function") {
-            cfg.callback.call(target, {
-                'offsetX': mx,
-                'offsetY': oy
-            });
-        }
-        x = nx;
-        y = ny;
-        e.returnValue = false;
     }
     this.addEventListener('mousedown', function(e) {
-        if (e.which == 1) drag_start(e);
+        if (e.which == 1) {
+            drag_start(e);
+            document.addEventListener('mousemove', dragging);
+        }
     });
     this.addEventListener('mouseup', function(e) {
-        if (e.which == 1) drag_end();
+        if (e.which == 1) {
+            document.removeEventListener('mousemove', dragging);
+            flag = false;
+        }
     })
-    this.addEventListener('mousemove', function(e) {
-        if (e.which == 1) dragging(e);
-    });
     this.addEventListener('touchstart', function(e) {
-       drag_start(e); 
+        drag_start(e);
+        document.addEventListener('touchmove', dragging);
     });
     this.addEventListener('touchend', function(e) {
-       drag_end(e); 
-    });
-    this.addEventListener('touchmove', function(e) {
-       dragging(e); 
+        document.addEventListener('touchmove', dragging);
+        flag = false;
     });
 }
 Element.prototype.getComputedValue = function(property) {
@@ -274,5 +276,9 @@ addEventListener('load', function() {
         axis: 'x',
         callback: date.Move
     });
-    document.querySelectorAll(".task-pad").forEach(a => a.drag());
-})
+    document.querySelectorAll(".drag-icon").forEach(a => a.drag({
+        bind: function (e) {
+            return this.parentElement;
+        }
+    }));
+});

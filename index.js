@@ -2,28 +2,41 @@ Element.prototype.drag = function(cfg) {
     cfg = cfg || {};
     let flag = false;
     let x, y;
-    let mx, my;
+    let mx = 0, my = 0;
     let origin = this;
-    let target = this;
     function drag_start(e) {
-        if (typeof (cfg.bind) === "function") {
-            target = cfg.bind.call(origin, e) || target;
-        }
-        if (typeof (cfg.filter) === 'function') {
-            if (!cfg.filter.call(origin, e))
+        if (typeof(cfg.handle) === "function") {
+            let target = cfg.handle.call(origin, e);
+            if (!e.path.includes(target)) {
                 return;
+            }
+        } else if (typeof(cfg.handle) === "string") {
+            try {
+                let target = origin.querySelector(cfg.handle);
+                if (!e.path.includes(target)) {
+                    return;
+                }
+            } catch {
+                return;
+            }
         }
-        let position = target.getComputedValue('position');
+        let position = getComputedStyle(origin).getPropertyValue('position');
         if (!["relative", "fixed", "absolute"].includes(position)) {
-            target.style.position = "relative";
+            origin.style.position = "relative";
         }
-        mx = my = 0;
-        if ('targetTouches' in e) {
+        if (e instanceof TouchEvent) {
+            document.addEventListener('touchmove', dragging, {passive: false});
+            document.addEventListener('touchend', drag_end, {passive: false, once: true});
             x = e.targetTouches[0].clientX;
             y = e.targetTouches[0].clientY;
-        } else {
+        } else if (e.which == 1) {
+            document.addEventListener('mouseup', drag_end, {once: true});
+            document.addEventListener('mousemove', dragging);
             x = e.clientX;
             y = e.clientY;
+        }
+        if (typeof(cfg.start) === "function") {
+            cfg.start.call(origin, e);
         }
         flag = true;
     }
@@ -40,44 +53,48 @@ Element.prototype.drag = function(cfg) {
             let ox = nx - x, oy = ny - y;
             if (cfg.axis == undefined || cfg.axis == 'x' || cfg.axis == 'X') {
                 mx += ox;
-                target.posX += ox;
+                ox += parseFloat(getComputedStyle(origin).getPropertyValue('left') || 0);
+                origin.style.left = `${ox}px`;
             }
             if (cfg.axis == undefined || cfg.axis == 'y' || cfg.axis == 'Y') {
                 my += oy;
-                target.posY += oy;
+                oy += parseFloat(getComputedStyle(origin).getPropertyValue('top') || 0);
+                origin.style.top = `${oy}px`;
             }
             if (typeof (cfg.callback) === "function") {
-                cfg.callback.call(target, {
-                    'offsetX': mx,
-                    'offsetY': my
+                cfg.callback.call(origin, e, {
+                    'x': mx,
+                    'y': my
                 });
             }
             x = nx;
             y = ny;
-        } else if (flag) {
+            e.preventDefault();
+        } else {
+            drag_end(e);
+        }
+    }
+    function drag_end(e) {
+        if (flag) {
             flag = false;
+            if (e instanceof TouchEvent) {
+                document.removeEventListener('touchmove', dragging);
+            } else if (e.which == 1 || e.which == 0) {
+                document.removeEventListener('mousemove', dragging);
+            } else {
+                flag = true;
+            }
+            if (!flag && typeof(cfg.end) === "function") {
+                cfg.end.call(origin, e);
+            }
         }
     }
     this.addEventListener('mousedown', function(e) {
-        if (e.which == 1) {
-            drag_start(e);
-            document.addEventListener('mousemove', dragging);
-        }
+        drag_start(e);
     });
-    this.addEventListener('mouseup', function(e) {
-        if (e.which == 1) {
-            document.removeEventListener('mousemove', dragging);
-            flag = false;
-        }
-    })
     this.addEventListener('touchstart', function(e) {
         drag_start(e);
-        document.addEventListener('touchmove', dragging);
-    });
-    this.addEventListener('touchend', function(e) {
-        document.addEventListener('touchmove', dragging);
-        flag = false;
-    });
+    }, {passive: false});
 }
 Element.prototype.getComputedValue = function(property) {
     return getComputedStyle(this).getPropertyValue(property);
@@ -152,15 +169,15 @@ function TaskController() {
         pad.classList.add('task-pad');
         let icon = document.createElement('div');
         icon.classList.add('drag-icon');
-        pad.append(icon);
+        let rm = document.createElement('div');
+        rm.classList.add('rm-icon');
         let dict = [
-            ['Name', 'input', {type:'text'}],
-            ['Start', 'input', {type:'date'}],
-            ['Duration', 'input', {type:'number', min:'0'}],
-            ['End', 'input', {type:'date'}],
+            ['Name', 'input', {type: 'text', required: 'true'}],
+            ['Start', 'input', {type: 'date', required: 'true'}],
+            ['End', 'input', {type: 'date', required: 'true'}],
             ['Description', 'textarea']
         ];
-        pad.append(icon, ...dict.map(a => {
+        dict = dict.map((a, id) => {
             let label = document.createElement('label');
             let span = document.createElement('span');
             let ele = document.createElement(a[1]);
@@ -168,7 +185,55 @@ function TaskController() {
             Object.entries(a[2] || {}).forEach(i => ele.setAttribute(...i));
             label.append(span, ele);
             return label;
-        }));
+        });
+        rm.addEventListener('click', function(e) {
+            rm.parentElement.classList.add('fixed-center');
+            setTimeout(function() {
+                if (confirm("Are you sure you want to delete this task")) {
+                    rm.parentElement.remove();
+                } else {                
+                    rm.parentElement.classList.remove('fixed-center');
+                }
+            }, 0);
+        });
+        dict[1].querySelector('input[type="date"]').addEventListener('change', function(e) {
+            dict[2].querySelector('input[type="date"]').min = this.value;
+        });
+        pad.append(icon, rm, ...dict);
+        pad.drag({
+            handle: ".drag-icon",
+            start: function(e) {
+                this.style.zIndex = 1;
+            },
+            end: function(e) {
+                this.style.zIndex = "";
+                if (!this.classList.contains('minima')) {
+                    this.style.left = "";
+                    this.style.top = "";
+                } else {
+                    document.getElementById('tasks-view').addEventListener('mouseenter', function(e) {
+                        console.log(e);
+                    }, {once: true});
+                }
+            },
+            callback: function(e, offset) {
+                let hasClass = this.classList.contains('minima');
+                let bounds = this.getBoundingClientRect();
+                if (!hasClass && offset.x < -50) {
+                    let l = bounds.left, t = bounds.top;
+                    this.classList.add('minima');
+                    bounds = this.getBoundingClientRect();
+                    this.posX += l - bounds.left;
+                    this.posY += t - bounds.top;
+                } else if (hasClass && offset.x >= -50) {
+                    let l = bounds.left, t = bounds.top;
+                    this.classList.remove('minima');
+                    bounds = this.getBoundingClientRect();
+                    this.posX += l - bounds.left;
+                    this.posY += t - bounds.top;
+                }
+            }
+        });
         return pad;
     }
 
@@ -188,6 +253,20 @@ function TaskController() {
         }
     }
 
+/*     function virtual_wheel (e) {
+        if (TaskController.isRegister && TaskController.isRegister != virtual_wheel) {
+            document.removeEventListener('wheel', virtual_wheel);
+        } else if (e.path.includes(document.getElementById('task-side'))){
+            TaskController.isRegister = virtual_wheel;
+            let v = parseFloat(getComputedStyle(document.getElementById('task-side')).getPropertyValue("--offset-deltaY")) - e.deltaY;
+            v = Math.min(v, 0);
+            document.getElementById('task-side').style.setProperty("--offset-deltaY", `${v}px`);
+            e.preventDefault(); 
+        }
+    }
+    
+    document.addEventListener('wheel', virtual_wheel, {passive: false}); */
+
     function Test(n=5) {
         let obj = []
         for (let i = 0; i < n; i++) {
@@ -206,6 +285,7 @@ function TaskController() {
             view.append(TaskPad());
         }
     }
+    
     return {
         "List": List,
         "Show": Show,
@@ -217,7 +297,6 @@ function TaskController() {
 function DateController() {
     let view = document.getElementById('tasks-view');
     let preSize = null;
-
     function Switch(date) {
         date = date ? new Date(date) : new Date();
         view.innerHTML = '';
@@ -285,7 +364,9 @@ function DateController() {
         task.dataset["date"] = date.toISOString();
         return task;
     }
-
+    
+    view.drag({axis: 'x', callback: Move});
+    
     return {
         "Switch": Switch,
         "Update": Update,
@@ -295,9 +376,9 @@ function DateController() {
 
 addEventListener('load', function() {
     let task = new TaskController();
-    task.Test(26);
+    task.Test(10);
     task.List();
-    task.AddPad(3);
+    task.AddPad(5);
     let date = new DateController();
     date.Switch();
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);
@@ -305,13 +386,4 @@ addEventListener('load', function() {
     document.getElementById("numTasks").addEventListener('change', function(e) {
         date.Update(e.target.valueAsNumber);
     });
-    document.getElementById('tasks-view').drag({
-        axis: 'x',
-        callback: date.Move
-    });
-    document.querySelectorAll(".drag-icon").forEach(a => a.drag({
-        bind: function (e) {
-            return this.parentElement;
-        }
-    }));
 });

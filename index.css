@@ -14,10 +14,11 @@
     --side-br: darkred;
     --side-pd: 0.75em;
     --task-pad-bg: brown;
+    --task-pad-size: 350px;
     --task-pad-br: #000;
     --data-fmt-bg: #eee;
     --data-fmt-br: #333;
-    --drag-icon-size: 60px;
+    --drag-icon-size: 48px;
     --drag-br-width: calc(var(--drag-icon-size) / 6);
 }
 html, body {
@@ -26,6 +27,12 @@ html, body {
 body {
     margin: 0;
     overscroll-behavior-y: contain;
+}
+.fixed-center {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
 }
 .flex {
     display: flex;
@@ -141,39 +148,38 @@ label[for="DateFormat"] > span:last-of-type {
 .task {
     min-width: var(--show-width);
     max-width: var(--show-width);
+    border: 1px solid #000;
+    border-left-width: 0;
+    box-sizing: border-box;
 }
 .task-date {
     position: fixed;
-    width: calc(var(--show-width) - 1px);
+    width: var(--show-width);
     line-height: 2;
-    outline: 1px solid #000;
-    margin-top: 1px;
     text-align: center;
+    border-bottom: 1px solid #000;
 }
 .task-date::before {
     content: attr(data-date);
 }
 .task-fill {
     height: 100%;
-    border: 1px solid #000;
-    border-left-width: 0;
     padding-top: calc(2em + 1px);
-    box-sizing: border-box;
 }
 #task-side {
-    position: fixed;
-    right: 0;
-    top: var(--menu-hi);
-    bottom: 0;
-    width: 0;
+    min-width: 0;
+    max-width: 0;
     border: 0 solid var(--side-br);
     background-color: var(--side-bg);
-    padding: 0;
-    transition-property: width, border-width, padding;
+    padding: var(--side-pd) 0;
+    position: fixed;
+    right: 0;
+    transition-property: min-width, max-width, padding, border-width;
     transition-duration: 0.25s;
 }
 #task-side.show {
-    width: 25vw;
+    min-width: var(--task-pad-size);
+    max-width: var(--task-pad-size);
     padding: var(--side-pd);
     border-width: 1px;
 }
@@ -181,15 +187,15 @@ label[for="DateFormat"] > span:last-of-type {
     margin-bottom: var(--side-pd);
     border: 1px solid var(--task-pad-br);
     background-color: var(--task-pad-bg);
-    width: 100%;
-    opacity: 1;
-    transition-duration: 0.25s;
-    transition-property: opacity;
+    width: var(--task-pad-size);
     position: relative;
     overflow: hidden;
+    transition-property: width, border-width;
+    transition-duration: 0.25s;
 }
 #task-side:not(.show) > .task-pad {
-    opacity: 0;
+    width: 0;
+    border-width: 0;
 }
 #task-side > .task-pad:last-of-type {
     margin-bottom: 0;
@@ -203,17 +209,36 @@ label[for="DateFormat"] > span:last-of-type {
     user-select: none;
     background-image: linear-gradient(#000 50%, #00000000 50%);
     background-size: var(--drag-br-width) var(--drag-br-width);
-    transform: translate(-50%, -50%)  rotate(-45deg);
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+.rm-icon {
+    width: 2em;
+    height: 2em;
+    line-height: 2;
+    text-align: center;
+    margin-left: auto;
+}
+.rm-icon::before {
+    content: "\2500";
+    font-weight: bold;
 }
 .task-pad label {
     display: grid;
-    grid-template-columns: 1fr 2fr;
     padding: 0.5em 2em;
+}
+.task-pad label {
+    grid-template-columns: 1fr 2fr;
+}
+.task-pad label:last-of-type {
+    grid-template-rows: 1fr 5em;
+}
+.task-pad label:last-of-type span {
+    padding-bottom: 0.5em;
 }
 .task-pad label span {
     text-align: right;
     padding-right: 1em;
-    align-self: center;
+    line-height: 1.5;
 }
 .task-pad label *:not(span) {
     min-width: 100%;
@@ -223,4 +248,34 @@ label[for="DateFormat"] > span:last-of-type {
 .task-pad label textarea {
     resize: none;
     height: 5em;
+    grid-column-start: span 2;
+}
+.task-pad input:invalid {
+    outline: 5px solid #f00;
+}
+.task-pad.minima label:not(:first-of-type), .task-pad.minima label:first-of-type span, .task-pad.minima .rm-icon {
+    display: none;
+}
+.minima {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 250px;
+    box-sizing: border-box;
+}
+.minima .drag-icon {
+    transform: inherit;
+    position: relative;
+    float: left;
+    width: 2em;
+    height: 2em;
+    border-right: 1px solid #000;
+    cursor: move;
+    background: #0f0;
+}
+.minima label {
+    grid-template-columns: 1fr;
+    padding: 0;
+    box-sizing: inherit;
+    height: 2em;
 }

@@ -1,7 +1,9 @@
 :root {
     --menu-bg: #ddd;
     --menu-br: #000;
-    --menu-hi: 2em;
+    --menu-lh: 2em;
+    --menu-lc: 2;
+    --menu-hi: calc(var(--menu-lh) * var(--menu-lc));
     --view-bg: #eee;
     --view-br: #000;
     --list-bg: #eee;
@@ -46,12 +48,68 @@ body {
 .flex-fill {
     flex-grow: 1;
 }
+.menu {
+	display: table-cell;
+    margin: 1px;
+    padding: 0 0.5em;
+    position: relative;
+}
+.menu:hover {
+	border-color: #cce8ff;
+	background-color: #e5f3ff;
+}
+.menu > .group {
+	display:none;
+}
+.menu:hover > .group {
+	display: block;
+    left: 0;
+}
+.menu::before, .item::after {
+	content: attr(data-text);
+}
+.group {
+	background: #f0f0f0;
+	border: 1px solid #ccc;
+	position: absolute;
+}
+.item {
+	border: 1px solid #f0f0f0;
+	line-height: 1.5;
+	padding: 0 0.5em;
+    margin-left: 1px;
+    position: relative;
+    min-width: max-content;
+}
+.item:hover {
+	background: #90c8f6;
+    z-index: 1;
+}
+.item > .group {
+	display: none;
+    top: -2px;
+	left: 100%;
+}
+.item:hover > .group {
+	display: block;
+}
+.option > .item::before {
+    content: '\2714';
+    width: 1em;
+    float: left;
+}
+.option > .item.check::before {
+    color: #0f0;
+}
+.option > .item:not(.check)::before {
+    color: transparent;
+}
 #menu {
     position: fixed;
     left: 0;
     right: 0;
     top: 0;
-    line-height: var(--menu-hi);
+    line-height: var(--menu-lh);
     height: var(--menu-hi);
     border: 1px solid var(--menu-br);
     border-top: none;

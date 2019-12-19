@@ -145,6 +145,43 @@ Object.defineProperty(Element.prototype, "posY", {
         this.style.top = `${v}px`;
     }
 });
+Date.prototype.addDate = function(value) {
+    let x = new Date(this);
+    x.setDate(x.getDate() + value);
+    return x;
+}
+Date.prototype.addMonth = function(value) {
+    let x = new Date(this);
+    x.setMonth(x.getMonth() + value);
+    return x;
+}
+Date.prototype.addMinutes = function(value) {
+    let x = new Date(this);
+    x.setMinutes(x.getMinutes() + value);
+    return x;
+}
+function DateConverter(type) {
+    let input = document.createElement('input');
+    input.type = type || 'date';
+    function getDate(date) {
+        input.valueAsDate = new Date(date).addMinutes(-date.getTimezoneOffset());
+        return input.valueAsDate.addMinutes(date.getTimezoneOffset());
+    }
+    function getString(date) {
+        input.valueAsDate = new Date(date).addMinutes(-date.getTimezoneOffset());
+        return input.value;
+    }
+    return {
+        get Type() {
+            return input.type.toLowerCase();
+        },
+        set Type(type) {
+            input.type = type || input.type;
+        },
+        "GetDate": getDate,
+        "GetString": getString
+    }
+}
 
 function TaskController() {
     let tasksData = {
@@ -163,7 +200,7 @@ function TaskController() {
             tmp.push(...v.Tasks);
         }
     }
-    
+
     function TaskPad() {
         let pad = document.createElement('div');
         pad.classList.add('task-pad');
@@ -191,7 +228,7 @@ function TaskController() {
             setTimeout(function() {
                 if (confirm("Are you sure you want to delete this task")) {
                     rm.parentElement.remove();
-                } else {                
+                } else {
                     rm.parentElement.classList.remove('fixed-center');
                 }
             }, 0);
@@ -253,20 +290,6 @@ function TaskController() {
         }
     }
 
-/*     function virtual_wheel (e) {
-        if (TaskController.isRegister && TaskController.isRegister != virtual_wheel) {
-            document.removeEventListener('wheel', virtual_wheel);
-        } else if (e.path.includes(document.getElementById('task-side'))){
-            TaskController.isRegister = virtual_wheel;
-            let v = parseFloat(getComputedStyle(document.getElementById('task-side')).getPropertyValue("--offset-deltaY")) - e.deltaY;
-            v = Math.min(v, 0);
-            document.getElementById('task-side').style.setProperty("--offset-deltaY", `${v}px`);
-            e.preventDefault(); 
-        }
-    }
-    
-    document.addEventListener('wheel', virtual_wheel, {passive: false}); */
-
     function Test(n=5) {
         let obj = []
         for (let i = 0; i < n; i++) {
@@ -285,7 +308,7 @@ function TaskController() {
             view.append(TaskPad());
         }
     }
-    
+
     return {
         "List": List,
         "Show": Show,
@@ -297,14 +320,37 @@ function TaskController() {
 function DateController() {
     let view = document.getElementById('tasks-view');
     let preSize = null;
+    let converter = new DateConverter('date');
+    let type = 'date';
+
+    function nextDate() {
+        if (type == "date") {
+            return (date) => Date.prototype.addDate.call(date, 1);
+        } else if (type == "week") {
+            return (date) => Date.prototype.addDate.call(date, 7);
+        } else if (type == "month") {
+            return (date) => Date.prototype.addMonth.call(date, 1);
+        }
+    }
+
+    function lastDate() {
+        if (type == "date") {
+            return (date) => Date.prototype.addDate.call(date, -1);
+        } else if (type == "week") {
+            return (date) => Date.prototype.addDate.call(date, -7);
+        } else if (type == "month") {
+            return (date) => Date.prototype.addMonth.call(date, -1);
+        }
+    }
+
     function Switch(date) {
-        date = date ? new Date(date) : new Date();
+        date = converter.GetDate(date ? new Date(date) : new Date());
         view.innerHTML = '';
         let c = 2 + parseInt(document.documentElement.getComputedValue('--show-count'));
-        date.setDate(date.getDate() - 1);
+        date = lastDate()(date);
         for (let i = 0; i < c; i++) {
             view.append(GetColumn(date));
-            date.setDate(date.getDate() + 1);
+            date = nextDate()(date);
         }
         preSize = view.firstElementChild.width
         view.posX = -preSize;
@@ -324,10 +370,10 @@ function DateController() {
         view.posX = x;
         if ((view.lastElementChild.right - xMax) < 100) {
             let t = new Date(view.lastElementChild.dataset["date"]);
-            t.setDate(t.getDate() + 1);
-            view.lastElementChild.after(GetColumn(t));
+            view.lastElementChild.after(GetColumn(nextDate()(t)));
         }
     }
+
     function Move() {
         let xMin = document.getElementById("tasks-list").right;
         let xMax = window.innerWidth;
@@ -338,14 +384,12 @@ function DateController() {
             x += fTask.width;
             fTask.remove();
             let t = new Date(lTask.dataset["date"]);
-            t.setDate(t.getDate() + 1);
-            lTask.after(GetColumn(t));
+            lTask.after(GetColumn(nextDate()(t)));
         } else if ((lTask.left - xMax) > 20) {
             x -= lTask.width;
             lTask.remove();
             let t = new Date(fTask.dataset["date"]);
-            t.setDate(t.getDate() - 1);
-            fTask.before(GetColumn(t));
+            fTask.before(GetColumn(lastDate()(t)));
         }
         view.posX = x;
     }
@@ -357,16 +401,30 @@ function DateController() {
         task.classList.add('task', 'flex', 'flex-column');
         taskDate.classList.add('task-date');
         taskFill.classList.add('task-fill');
-        let m = (date.getMonth() + 1).toString().padStart(2, '0');
-        let d = (date.getDate()).toString().padStart(2, '0');
-        taskDate.dataset["date"] = m + "/" + d;
+        taskDate.dataset["date"] = converter.GetString(date);
         task.append(taskDate, taskFill);
         task.dataset["date"] = date.toISOString();
         return task;
     }
-    
+
+    function ChangeFormat(format) {
+        if (["date", "week", "month"].includes(format)) {
+            type = format;
+            converter.Type = format;
+        }
+    }
+
     view.drag({axis: 'x', callback: Move});
-    
+
+    document.getElementById('DateFormat').addEventListener('change', function(e) {
+        let x = ["date", "week", "month"][this.valueAsNumber];
+        let d = view.firstElementChild.dataset["date"];
+        d = nextDate()(d);
+        offset = view.posX;
+        ChangeFormat(x);
+        Switch(d);
+        view.posX = offset;
+    });
     return {
         "Switch": Switch,
         "Update": Update,

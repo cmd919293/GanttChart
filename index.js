@@ -150,6 +150,11 @@ Date.prototype.addDate = function(value) {
     x.setDate(x.getDate() + value);
     return x;
 }
+Date.prototype.addWeek = function(value) {
+    let x = new Date(this);
+    x.setDate(x.getDate() + value * 7);
+    return x;
+}
 Date.prototype.addMonth = function(value) {
     let x = new Date(this);
     x.setMonth(x.getMonth() + value);
@@ -160,6 +165,7 @@ Date.prototype.addMinutes = function(value) {
     x.setMinutes(x.getMinutes() + value);
     return x;
 }
+
 function DateConverter(type) {
     let input = document.createElement('input');
     input.type = type || 'date';
@@ -183,25 +189,70 @@ function DateConverter(type) {
     }
 }
 
-function TaskController() {
-    let tasksData = {
-        "Name": "Gantt Chart 1",
-        "Tasks": []
-    };
-    let tasks = document.getElementById('tasks-list');
+function Database() {
+    id = 0;
+    this.name = "Untitled";
+    this.source = [];
 
-    function List() {
-        document.title = tasksData.Name;
-        let tmp = [];
-        tmp.push(...tasksData.Tasks);
-        while (tmp.length > 0) {
-            let v = tmp.shift();
-            tasks.append(GetTaskBar(v));
-            tmp.push(...v.Tasks);
+    function Load(obj) {
+        let tasks = [];
+        this.name = obj.name;
+        this.date = obj.date;
+        this.source = [];
+        obj.tasks.PID = -1;
+        tasks.push(obj.tasks);
+        id = 0;
+        while (tasks.length > 0) {
+            let t = tasks.shift();
+            while (t.length > 0) {
+                let v = t.shift();
+                v.tasks.PID = Insert.call(this, v, t.PID);
+                tasks.push(v.tasks);
+            }
         }
     }
 
-    function TaskPad() {
+    function Create(task, index, pid) {
+        return {
+            "id": index,
+            "name": task.name,
+            "start_time": new Date(task.start_time),
+            "end_time": new Date(task.end_time),
+            "description": task.description,
+            "pid": pid
+        }
+    }
+
+    function Insert(task, pid) {
+        this.source.push(Create.call(this, task, id, pid));
+        return id++;
+    }
+
+    function Query(func) {
+        let result = [];
+        for (let i = 0; i < this.source.length; i++) {
+            if (func.call(this, this.source[i])) {
+                result.push(this.source[i]);
+            }
+        }
+        return result;
+    }  
+    
+    function Test() {
+        Load.call(this, {"name":"Test1", "date": "2019-12-25T00:00:00.000Z", "tasks":[{"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named aaa","tasks":[{"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named bbb","tasks":[]}]},{"name":"ccc","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named ccc","tasks":[{"name":"ddd","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ccc","tasks":[]}]}]});
+    }
+
+    this.Load = Load;
+    this.Insert = Insert;
+    this.Query = Query;
+    this.Test = Test;
+}
+
+function TaskController() {
+    let self = this;
+    let tasks = document.getElementById('tasks-list');
+
+    function taskPad() {
         let pad = document.createElement('div');
         pad.classList.add('task-pad');
         let icon = document.createElement('div');
@@ -274,10 +325,62 @@ function TaskController() {
         return pad;
     }
 
-    function GetTaskBar(task) {
+    function getTaskTag(task) {
         let ele = document.createElement('span');
-        ele.dataset["taskName"] = task.Name;
+        ele.dataset["taskName"] = task.name;
+        ele.dataset["start"] = task.start_time.toISOString();
+        ele.dataset["end"] = task.end_time.toISOString();
+        ele.dataset["index"] = task.id;
+        ele.dataset["pid"] = task.pid;        
         return ele;
+    }
+
+    function getTaskBar(task, left, right) {
+        // TODO
+    }
+
+    function AddLastDateTask(container, st, ed) {
+        if (self.db) {
+            let st_time = st.getTime();
+            let ed_time = ed.getTime();
+            container = container.querySelector('.task-fill');
+            let tasks = self.db.Query(function(task) {
+               let t1 = task.start_time.getTime();
+               return st_time <= t1 && t1 < ed_time;
+            });
+            for (let i = 0; i < tasks.length; i++) {
+                let task = tasks[i];
+                container.append(getTaskBar(task, st, ed));
+            }
+        }
+    }
+
+    function AddFirstDateTask(container, st, ed) {
+        if (self.db) {
+            let st_time = st.getTime();
+            let ed_time = ed.getTime();
+            container = container.querySelector('.task-fill');
+            let tasks = self.db.Query(function(task) {
+                let t1 = task.start_time.getTime();
+                // TODO
+                return st <= t1 && t1 < ed;
+            });
+            for (let i = 0; i < tasks.length; i++) {
+                let task = tasks[i];
+                container.append(getTaskBar(task));
+            }
+        }
+    }
+
+    function Bind(database) {
+        this.db = database;
+    }
+    
+    function List() {
+        document.title = this.db.name;
+        for (let i = 0; i < this.db.source.length; i++) {
+            tasks.append(getTaskTag.call(this, this.db.source[i]));
+        }
     }
 
     function Show() {
@@ -290,69 +393,98 @@ function TaskController() {
         }
     }
 
-    function Test(n=5) {
-        let obj = []
-        for (let i = 0; i < n; i++) {
-            let temp = {};
-            temp['Name'] = String.fromCharCode(97 + i).repeat(3);
-            temp['Tasks'] = []
-            obj.push(temp);
-        }
-        tasksData["Tasks"] = obj;
-        tasksData["Name"] = "Gantt Chart";
-    }
-
     function PadTest(n=2) {
         let view = document.getElementById('task-side');
         for(let i = 0; i < n; i++) {
-            view.append(TaskPad());
+            view.append(taskPad.call(self));
         }
     }
 
-    return {
-        "List": List,
-        "Show": Show,
-        "Test": Test,
-        "AddPad": PadTest
-    }
+    this.Bind = Bind;
+    this.List = List;
+    this.Show = Show;
+
+    this.AddPad = PadTest;
 }
 
 function DateController() {
+    let self = this;
     let view = document.getElementById('tasks-view');
-    let preSize = null;
     let converter = new DateConverter('date');
+    let preSize = null;
     let type = 'date';
+    let curr_date = new Date();
+    let lastDate, nextDate;
+    this.OnLastChange = undefined;
+    this.OnFirstChange = undefined;
 
-    function nextDate() {
+    function shiftDate(unit) {
         if (type == "date") {
-            return (date) => Date.prototype.addDate.call(date, 1);
+            return (date) => Date.prototype.addDate.call(date, unit);
         } else if (type == "week") {
-            return (date) => Date.prototype.addDate.call(date, 7);
+            return (date) => Date.prototype.addWeek.call(date, unit);
         } else if (type == "month") {
-            return (date) => Date.prototype.addMonth.call(date, 1);
+            return (date) => Date.prototype.addMonth.call(date, unit);
         }
     }
 
-    function lastDate() {
-        if (type == "date") {
-            return (date) => Date.prototype.addDate.call(date, -1);
-        } else if (type == "week") {
-            return (date) => Date.prototype.addDate.call(date, -7);
-        } else if (type == "month") {
-            return (date) => Date.prototype.addMonth.call(date, -1);
+    function getColumn(date) {
+        let task = document.createElement("div");
+        let taskDate = document.createElement("div");
+        let taskFill = document.createElement("div");
+        task.classList.add('task', 'flex', 'flex-column');
+        taskDate.classList.add('task-date');
+        taskFill.classList.add('task-fill');
+        taskDate.dataset["date"] = converter.GetString(date);
+        task.append(taskDate, taskFill);
+        task.dataset["date"] = date.toISOString();
+        return task;
+    }
+
+    function insertLast(lTask) {
+        let t = new Date(lTask.dataset["date"]);
+        let st = nextDate(t);
+        let last = getColumn.call(this, st);
+        lTask.after(last);
+        if (typeof(this.OnLastChange) === "function") {
+            let ed = nextDate(st);
+            this.OnLastChange.call(this, last, st, ed);
         }
+    }
+
+    function insertFirst(fTask) {
+        let t = new Date(fTask.dataset["date"]);
+        let st = lastDate(t);
+        let first = getColumn.call(this, st);
+        fTask.before(first);
+        if (typeof(this.OnFirstChange) === "function") {
+            this.OnFirstChange(this, first, st, t);
+        }
+    }
+
+    function Bind(database) {
+        this.db = database;
+        curr_date = this.db.date ? new Date(this.db.date) : new Date();
     }
 
     function Switch(date) {
-        date = converter.GetDate(date ? new Date(date) : new Date());
+        curr_date = date ? new Date(date) : curr_date;
+        date = converter.GetDate(curr_date);
         view.innerHTML = '';
         let c = 2 + parseInt(document.documentElement.getComputedValue('--show-count'));
-        date = lastDate()(date);
+        date = lastDate(date);
+        st_time = date.getTime();
         for (let i = 0; i < c; i++) {
-            view.append(GetColumn(date));
-            date = nextDate()(date);
+            view.append(getColumn.call(this, date));
+            date = nextDate(date);
         }
-        preSize = view.firstElementChild.width
+        ed_time = date.getTime();
+        let tasks = this.db.Query(function(task) {
+            let t1 = task.start_time.getTime();
+            let t2 = task.end_time.getTime();
+            return st_time <= t1 && t1 < ed_time || st_time <= t2 && t2 < ed_time || t1 <= st_time && end_time < t2;
+        });
+        preSize = view.firstElementChild.width;
         view.posX = -preSize;
     }
 
@@ -368,9 +500,9 @@ function DateController() {
         let x = view.posX * sx;
         preSize = size;
         view.posX = x;
-        if ((view.lastElementChild.right - xMax) < 100) {
-            let t = new Date(view.lastElementChild.dataset["date"]);
-            view.lastElementChild.after(GetColumn(nextDate()(t)));
+        let lTask = view.lastElementChild;
+        if ((lTask.right - xMax) < 100) {
+            insertLast(lTask);
         }
     }
 
@@ -383,64 +515,62 @@ function DateController() {
         if ((xMin - fTask.right) > 20) {
             x += fTask.width;
             fTask.remove();
-            let t = new Date(lTask.dataset["date"]);
-            lTask.after(GetColumn(nextDate()(t)));
+            curr_date = nextDate(curr_date);
+            insertLast(lTask);
         } else if ((lTask.left - xMax) > 20) {
             x -= lTask.width;
             lTask.remove();
-            let t = new Date(fTask.dataset["date"]);
-            fTask.before(GetColumn(lastDate()(t)));
+            curr_date = lastDate(curr_date);
+            insertFirst(fTask);
         }
         view.posX = x;
     }
 
-    function GetColumn(date) {
-        let task = document.createElement("div");
-        let taskDate = document.createElement("div");
-        let taskFill = document.createElement("div");
-        task.classList.add('task', 'flex', 'flex-column');
-        taskDate.classList.add('task-date');
-        taskFill.classList.add('task-fill');
-        taskDate.dataset["date"] = converter.GetString(date);
-        task.append(taskDate, taskFill);
-        task.dataset["date"] = date.toISOString();
-        return task;
-    }
-
-    function ChangeFormat(format) {
-        if (["date", "week", "month"].includes(format)) {
-            type = format;
-            converter.Type = format;
+    Object.defineProperty(this, "Type", {
+        get() {
+            return type;
+        },
+        set(fmt) {
+            if (["date", "week", "month"].includes(fmt)) {
+                type = fmt;
+                converter.Type = fmt;
+                lastDate = shiftDate(-1);
+                nextDate = shiftDate(+1);
+            }
         }
-    }
+    });
 
     view.drag({axis: 'x', callback: Move});
 
     document.getElementById('DateFormat').addEventListener('change', function(e) {
         let x = ["date", "week", "month"][this.valueAsNumber];
         let d = view.firstElementChild.dataset["date"];
-        d = nextDate()(d);
+        d = nextDate(d);
         offset = view.posX;
-        ChangeFormat(x);
-        Switch(d);
+        self.Type = x;
+        self.Switch(curr_date);
         view.posX = offset;
     });
-    return {
-        "Switch": Switch,
-        "Update": Update,
-        "Move": Move
-    }
+    
+    window.addEventListener('resize', ()=>Update());
+    
+    this.Bind = Bind;
+    this.Switch = Switch;
+    this.Update = Update;
+    this.Type = "date";
 }
 
 addEventListener('load', function() {
     let task = new TaskController();
-    task.Test(10);
+    let date = new DateController();
+    let data = new Database();
+    data.Test();
+    task.Bind(data);
+    date.Bind(data);
+    date.Switch();
     task.List();
     task.AddPad(5);
-    let date = new DateController();
-    date.Switch();
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);
-    addEventListener('resize', ()=>date.Update());
     document.getElementById("numTasks").addEventListener('change', function(e) {
         date.Update(e.target.valueAsNumber);
     });

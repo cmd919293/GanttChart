@@ -337,3 +337,9 @@ label[for="DateFormat"] > span:last-of-type {
     box-sizing: inherit;
     height: 2em;
 }
+.task-bar {
+    outline: 1px solid #000;
+    height: 2em;
+    position: absolute;
+    background: green;
+}

@@ -2,7 +2,7 @@
     --menu-bg: #ddd;
     --menu-br: #000;
     --menu-lh: 2em;
-    --menu-lc: 2;
+    --menu-lc: 1;
     --menu-hi: calc(var(--menu-lh) * var(--menu-lc));
     --view-bg: #eee;
     --view-br: #000;
@@ -69,11 +69,13 @@ body {
 	content: attr(data-text);
 }
 .group {
+    display: block;
 	background: #f0f0f0;
 	border: 1px solid #ccc;
 	position: absolute;
 }
 .item {
+    display: block;
 	border: 1px solid #f0f0f0;
 	line-height: 1.5;
 	padding: 0 0.5em;
@@ -116,6 +118,11 @@ body {
     background-color: var(--menu-bg);
     padding: 0 0.5em;
     z-index: 1;
+}
+.align-right {
+    display: inline-block;
+    float: right;
+    clear: both;
 }
 label[for="DateFormat"] {
     display: inline-flex;
@@ -273,12 +280,18 @@ label[for="DateFormat"] > span:last-of-type {
     width: 2em;
     height: 2em;
     line-height: 2;
-    text-align: center;
     margin-left: auto;
+    position: relative;
 }
 .rm-icon::before {
-    content: "\2500";
-    font-weight: bold;
+    content: "";
+    width: 50%;
+    height: 2px;
+    background-color: black;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    left: 50%;
+    top: 50%;
 }
 .task-pad label {
     display: grid;
@@ -342,4 +355,37 @@ label[for="DateFormat"] > span:last-of-type {
     height: 2em;
     position: absolute;
     background: green;
+}
+.plus-button {
+    position: fixed;
+    right: 2vw;
+    bottom: 2vw;
+    height: 3vw;
+    width: 3vw;
+    line-height: 3vw;
+    border-radius: 50%;
+    border: none;
+    background-color: #dad;
+}
+.plus-button:active {
+    background-color: #a7a;
+}
+.plus-button:focus {
+    box-shadow: 0 0 0 1px rgb(77 , 144, 254);
+    outline: none;
+}
+.plus-button::before, .plus-button::after {
+    content: "";
+    display: block;
+    width: 50%;
+    height: 2px;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+.plus-button::after {
+    height: 50%;
+    width: 2px;
 }

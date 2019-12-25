@@ -9,18 +9,28 @@
 </head>
 <body>
     <div id="menu">
-        <input type="number" min="1" max="10" value="7" id="numTasks"/>
-        <button id="ShowAddTask">Show Add Task</button>
-        <label for="DateFormat">
-            <input type="range" id="DateFormat" min="0" max="2" value="0"/>
-            <span date-text="日"></span>
-            <span date-text="週"></span>
-            <span date-text="月"></span>
-        </label>
+        <input id="openFile" hidden="true" type="file" />
+        <button class="plus-button" id="ShowAddTask"></button>
+        <div class="align-right">
+            <input type="number" min="1" max="10" value="7" id="numTasks"/>
+            <label for="DateFormat">
+                <input type="range" id="DateFormat" min="0" max="2" value="0"/>
+                <span date-text="日"></span>
+                <span date-text="週"></span>
+                <span date-text="月"></span>
+            </label>
+        </div>
         <div>
-            <div class="menu" data-text="檔案">
+            <div class="menu" data-text="File">
                 <div class="group">
-                    <div class="item" data-text="開啟舊檔">			
+                    <label class="item" for="openFile" data-text="Open"></label>
+                    <div class="item" id="saveFile" data-text="Save"></div>
+                    <div class="item" id="exitApp" data-text="Exit"></div>
+                </div>
+            </div>
+            <div class="menu" data-text="編輯">
+                <div class="group">
+                    <div class="item" data-text="搜尋">
                         <div class="group option">
                             <div class="item check" data-text="TTTT">
                                 <div class="group">
@@ -34,12 +44,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="item" data-text="多檔關閉"></div>
-                </div>
-            </div>
-            <div class="menu" data-text="編輯">
-                <div class="group">
-                    <div class="item" data-text="搜尋"></div>
                     <div class="item" data-text="取代"></div>
                 </div>
             </div>

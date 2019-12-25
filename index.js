@@ -190,61 +190,112 @@ function DateConverter(type) {
 }
 
 function Database() {
-    id = 0;
+    this.index = 1;
     this.name = "Untitled";
-    this.source = [];
+    this.source = {};
 
     function Load(obj) {
-        let tasks = [];
+        let tasks = obj.tasks;
         this.name = obj.name;
         this.date = obj.date;
-        this.source = [];
-        obj.tasks.PID = -1;
-        tasks.push(obj.tasks);
-        id = 0;
-        while (tasks.length > 0) {
-            let t = tasks.shift();
-            while (t.length > 0) {
-                let v = t.shift();
-                v.tasks.PID = Insert.call(this, v, t.PID);
-                tasks.push(v.tasks);
-            }
+        this.source = {};
+        for (let i = 0; i < tasks.length; i++) {
+            Insert.call(this, tasks[i]);
         }
     }
 
-    function Create(task, index, pid) {
+    function Save(date) {
+        return JSON.stringify({
+            "name": this.name,
+            "date": date ? new Date(date) : new Date(),
+            "tasks": Object.entries(this.source).map(a => {
+                let x = a[1];
+                return ["id", "name", "start_time", "end_time", "description", "pid"].reduce((a, b)=>{
+                    a[b] = x[b];
+                    return a
+                }, {});
+            })
+        });
+    }
+
+    function create(task, id, pid) {
+        let t1 = new Date(task.start_time);
+        let t2 = new Date(task.end_time);
         return {
-            "id": index,
+            "id": id,
             "name": task.name,
-            "start_time": new Date(task.start_time),
-            "end_time": new Date(task.end_time),
+            "start_time": t1,
+            "end_time": t2,
+            "min_date": t1,
+            "max_date": t2,
             "description": task.description,
             "pid": pid
         }
     }
 
     function Insert(task, pid) {
-        this.source.push(Create.call(this, task, id, pid));
-        return id++;
+        let id = task.id || this.index;
+        if (!this.source[id]) {
+            let obj = create.call(this, task, id, task.pid || 0);
+            Update.call(this, obj);
+            this.index = id + 1;
+        }
+        return id;
+    }
+
+    function Update(task) {
+        let obj = this.source[task.id] || task;
+        let pid = obj.pid || 0;
+        let t1 = obj.min_date, t2 = obj.max_date;
+        let v1 = t1.getTime(), v2 = t2.getTime();
+        Query.call(this, function (a) {
+            return a.pid == task.id;
+        }).forEach(function (val) {
+            let x = val.min_date().getTime();
+            let y = val.max_date().getTime();
+            if (x < v1) {
+                v1 = x;
+                t1 = val.min_date;
+            }
+            if (v2 < y) {
+                v2 = y;
+                t2 = val.max_date;
+            }
+        });
+        for (let tmp = this.source[pid], flag = true; flag && tmp; tmp = this.source[tmp.pid]) {
+            flag = false;
+            let t3 = tmp.min_date.getTime();
+            let t4 = tmp.max_date.getTime();
+            if (v1 < t3) {
+                flag = true;
+                tmp.min_date = t1;
+            }
+            if (t4 < v2) {
+                flag = true;
+                tmp.max_date = t2;
+            }
+        }
+        this.source[obj.id] = obj;
     }
 
     function Query(func) {
         let result = [];
-        for (let i = 0; i < this.source.length; i++) {
-            if (func.call(this, this.source[i])) {
-                result.push(this.source[i]);
-            }
-        }
+        Object.entries(this.source).forEach(task => {
+           if (func.call(self, task[1])) {
+               result.push(task[1]);
+           }
+        });
         return result;
-    }  
-    
+    }
+
     function Test() {
-        Load.call(this, {"name":"Test1", "date": "2019-12-25T00:00:00.000Z", "tasks":[{"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named aaa","tasks":[{"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named bbb","tasks":[]}]},{"name":"ccc","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named ccc","tasks":[{"name":"ddd","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ccc","tasks":[]}]}]});
+        Load.call(this, JSON.parse('{"name":"Test1","date":"2019-12-25T00:00:00.000Z","tasks":[{"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named aaa","pid":0},{"id":2,"name":"ccc","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named ccc","pid":0},{"id":3,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named bbb","pid":1},{"id":4,"name":"ddd","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ddd","pid":2}]}'));
     }
 
     this.Load = Load;
     this.Insert = Insert;
     this.Query = Query;
+    this.Save = Save;
     this.Test = Test;
 }
 
@@ -330,8 +381,10 @@ function TaskController() {
         ele.dataset["taskName"] = task.name;
         ele.dataset["start"] = task.start_time.toISOString();
         ele.dataset["end"] = task.end_time.toISOString();
+        ele.dataset["min"] = task.min_date.toISOString();
+        ele.dataset["max"] = task.max_date.toISOString();
         ele.dataset["index"] = task.id;
-        ele.dataset["pid"] = task.pid;        
+        ele.dataset["pid"] = task.pid;
         return ele;
     }
 
@@ -375,12 +428,13 @@ function TaskController() {
     function Bind(database) {
         this.db = database;
     }
-    
+
     function List() {
         document.title = this.db.name;
-        for (let i = 0; i < this.db.source.length; i++) {
-            tasks.append(getTaskTag.call(this, this.db.source[i]));
-        }
+        tasks.innerHTML = "";
+        this.db.Query(()=>!0).forEach(function(task) {
+            tasks.append(getTaskTag.call(self, task));
+        })
     }
 
     function Show() {
@@ -482,7 +536,7 @@ function DateController() {
         let tasks = this.db.Query(function(task) {
             let t1 = task.start_time.getTime();
             let t2 = task.end_time.getTime();
-            return st_time <= t1 && t1 < ed_time || st_time <= t2 && t2 < ed_time || t1 <= st_time && end_time < t2;
+            return st_time <= t1 && t1 < ed_time || st_time <= t2 && t2 < ed_time || t1 <= st_time && ed_time < t2;
         });
         preSize = view.firstElementChild.width;
         view.posX = -preSize;
@@ -540,6 +594,12 @@ function DateController() {
         }
     });
 
+    Object.defineProperty(this, "Date", {
+        get() {
+            return new Date(curr_date);
+        }
+    });
+
     view.drag({axis: 'x', callback: Move});
 
     document.getElementById('DateFormat').addEventListener('change', function(e) {
@@ -551,9 +611,9 @@ function DateController() {
         self.Switch(curr_date);
         view.posX = offset;
     });
-    
+
     window.addEventListener('resize', ()=>Update());
-    
+
     this.Bind = Bind;
     this.Switch = Switch;
     this.Update = Update;
@@ -573,5 +633,35 @@ addEventListener('load', function() {
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);
     document.getElementById("numTasks").addEventListener('change', function(e) {
         date.Update(e.target.valueAsNumber);
+    });
+    document.getElementById('exitApp').addEventListener('click', ()=>window.close());
+    document.getElementById('saveFile').addEventListener('click', ()=> {
+        let str = data.Save(date.Date);
+        let blob = new Blob([str], {type: "application/json;charset=utf-8"});
+        let href = URL.createObjectURL(blob);
+        let link = document.createElement('a');
+        link.href = href;
+        link.download = data.name.replace(/[\\/:?*|<>]/g, "_") + ".json";
+        link.addEventListener('click', function(){
+            setTimeout(function() {
+                URL.revokeObjectURL(href);
+                link.remove();
+            }, 1000);
+        });
+        link.target = "_blank";
+        link.click();
+    });
+    document.getElementById('openFile').addEventListener('change', function(){
+        let file = this.files;
+        if (file.length > 0) {
+            let reader = new FileReader();
+            reader.addEventListener('load', function(){
+                let r = JSON.parse(this.result);
+                data.Load(r);
+                date.Switch(data.date);
+                task.List();
+            });
+            reader.readAsText(file[0]);
+        }
     });
 });

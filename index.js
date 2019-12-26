@@ -165,6 +165,9 @@ Date.prototype.addMinutes = function(value) {
     x.setMinutes(x.getMinutes() + value);
     return x;
 }
+Date.prototype.toLocalISOString = function() {
+    return this.addMinutes(-this.getTimezoneOffset()).toISOString();
+}
 
 function DateConverter(type) {
     let input = document.createElement('input');
@@ -193,6 +196,7 @@ function Database() {
     this.index = 1;
     this.name = "Untitled";
     this.source = {};
+    this.tree = {};
 
     function Load(obj) {
         let tasks = obj.tasks;
@@ -221,6 +225,8 @@ function Database() {
     function create(task, id, pid) {
         let t1 = new Date(task.start_time);
         let t2 = new Date(task.end_time);
+        t1 = t1.addMinutes(t1.getTimezoneOffset());
+        t2 = t2.addMinutes(t2.getTimezoneOffset());
         return {
             "id": id,
             "name": task.name,
@@ -247,33 +253,41 @@ function Database() {
         let obj = this.source[task.id] || task;
         let pid = obj.pid || 0;
         let t1 = obj.min_date, t2 = obj.max_date;
-        let v1 = t1.getTime(), v2 = t2.getTime();
         Query.call(this, function (a) {
             return a.pid == task.id;
         }).forEach(function (val) {
-            let x = val.min_date().getTime();
-            let y = val.max_date().getTime();
-            if (x < v1) {
-                v1 = x;
-                t1 = val.min_date;
+            let x = val.min_date;
+            let y = val.max_date;
+            if (x < t1) {
+                t1 = x;
             }
-            if (v2 < y) {
-                v2 = y;
-                t2 = val.max_date;
+            if (t2 < y) {
+                t2 = y;
             }
         });
-        for (let tmp = this.source[pid], flag = true; flag && tmp; tmp = this.source[tmp.pid]) {
-            flag = false;
-            let t3 = tmp.min_date.getTime();
-            let t4 = tmp.max_date.getTime();
-            if (v1 < t3) {
-                flag = true;
-                tmp.min_date = t1;
+        let path = [];
+        for (let tmp = this.source[pid], flag = true;tmp; tmp = this.source[tmp.pid]) {
+            path.unshift(tmp.id);
+            if (flag) {
+                flag = false;
+                let t3 = tmp.min_date;
+                let t4 = tmp.max_date;
+                if (t1 < t3) {
+                    flag = true;
+                    tmp.min_date = t1;
+                }
+                if (t4 < t2) {
+                    flag = true;
+                    tmp.max_date = t2;
+                }
             }
-            if (t4 < v2) {
-                flag = true;
-                tmp.max_date = t2;
-            }
+        }
+        let tree = this.tree;
+        for (let i = 0; i < path.length; i++) {
+            tree = tree[this.source[path[i]].id];
+        }
+        if (!tree[obj.id]) {
+            tree[obj.id] = {};
         }
         this.source[obj.id] = obj;
     }
@@ -288,11 +302,33 @@ function Database() {
         return result;
     }
 
+    function TaskTree() {
+        let tasks = [];
+        function _(tree) {
+            for (let i in tree) {
+                tasks.push(this.source[i]);
+                _.call(this, tree[i]);
+            }
+        }
+        _.call(this, this.tree);
+        return tasks;
+    }
+
     function Test() {
-        Load.call(this, JSON.parse('{"name":"Test1","date":"2019-12-25T00:00:00.000Z","tasks":[{"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named aaa","pid":0},{"id":2,"name":"ccc","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named ccc","pid":0},{"id":3,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named bbb","pid":1},{"id":4,"name":"ddd","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ddd","pid":2}]}'));
+        Load.call(this, {
+            "name":"Test1",
+            "date":"2020-01-07T00:00:00.000Z",
+            "tasks":[
+                {"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-23T00:00:00.000Z","description":"this is a task named aaa","pid":0},
+                {"id":2,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named bbb","pid":0},
+                {"id":3,"name":"ccc","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ccc","pid":0},
+                {"id":4,"name":"ddd","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ddd","pid":0},
+                {"id":5,"name":"eee","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-31T00:00:00.000Z","description":"this is a task named eee","pid":0}
+            ]});
     }
 
     this.Load = Load;
+    this.TaskTree = TaskTree;
     this.Insert = Insert;
     this.Query = Query;
     this.Save = Save;
@@ -302,6 +338,7 @@ function Database() {
 function TaskController() {
     let self = this;
     let tasks = document.getElementById('tasks-list');
+    let converter = new DateConverter('date');
 
     function taskPad() {
         let pad = document.createElement('div');
@@ -379,48 +416,88 @@ function TaskController() {
     function getTaskTag(task) {
         let ele = document.createElement('span');
         ele.dataset["taskName"] = task.name;
-        ele.dataset["start"] = task.start_time.toISOString();
-        ele.dataset["end"] = task.end_time.toISOString();
-        ele.dataset["min"] = task.min_date.toISOString();
-        ele.dataset["max"] = task.max_date.toISOString();
+        ele.dataset["start"] = task.start_time.toLocalISOString();
+        ele.dataset["end"] = task.end_time.toLocalISOString();
+        ele.dataset["min"] = task.min_date.toLocalISOString();
+        ele.dataset["max"] = task.max_date.toLocalISOString();
         ele.dataset["index"] = task.id;
         ele.dataset["pid"] = task.pid;
         return ele;
     }
 
-    function getTaskBar(task, left, right) {
-        // TODO
+    function getTaskBar(task, unit, left, right) {
+        let min = task.min_date, max = task.max_date;
+        if (min < left) {
+            min = left;
+        }
+        let position = this.computeScaler(min, max);
+        let first = document.querySelector("#tasks-list > span:first-of-type");
+        let top = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
+        top = top.offsetTop - top.height + (top == first ? 3 : 1);
+        let div = document.createElement('div');
+        div.classList.add('task-bar');
+        div.style.marginLeft = unit * position[0] + "px";
+        div.style.width = unit * (position[1] - position[0]) - 1 + "px";
+        div.style.top = top + 'px';
+        div.dataset['index'] = task.id;
+        div.dataset['name'] = task.name;
+        div.dataset['min'] = task.min_date.toLocalISOString();
+        div.dataset['max'] = task.max_date.toLocalISOString();
+        return div;
     }
 
     function AddLastDateTask(container, st, ed) {
         if (self.db) {
-            let st_time = st.getTime();
-            let ed_time = ed.getTime();
             container = container.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
-               let t1 = task.start_time.getTime();
-               return st_time <= t1 && t1 < ed_time;
+               let t1 = task.min_date;
+               return st <= t1 && t1 < ed;
             });
             for (let i = 0; i < tasks.length; i++) {
                 let task = tasks[i];
-                container.append(getTaskBar(task, st, ed));
+                container.append(getTaskBar.call(this, task, container.parentElement.width, st, ed));
             }
+        }
+    }
+    
+    function AddTaskBar(container, st, ed) {
+        if (self.db) {
+            let size = container.width;
+            let view = container.parentElement;
+            container = container.querySelector('.task-fill');
+            let task = self.db.Query(function(task) {
+                let t1 = task.min_date;
+                let t2 = task.max_date;
+                return st <= t1 && t1 < ed || st < t2 && t2 <= ed;
+            })
         }
     }
 
     function AddFirstDateTask(container, st, ed) {
         if (self.db) {
-            let st_time = st.getTime();
-            let ed_time = ed.getTime();
+            let next = container.nextElementSibling.querySelectorAll('.task-fill > .task-bar');
+            let size = container.width;
             container = container.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
-                let t1 = task.start_time.getTime();
-                // TODO
-                return st <= t1 && t1 < ed;
+                let t1 = task.min_date;
+                let t2 = task.max_date;
+                if (st.getTime() == t1.getTime() && t1.getTime() == t2.getTime()) {
+                    return true;
+                } else {
+                    return st < t2 && t2 <= ed && t1.getTime() != t2.getTime();
+                }
             });
             for (let i = 0; i < tasks.length; i++) {
                 let task = tasks[i];
-                container.append(getTaskBar(task));
+                container.append(getTaskBar.call(this, task, size, st, ed));
+            }
+            for (let i = 0; i < next.length; i++) {
+                let bar = next[i];
+                let cur = this.db.source[bar.dataset['index']];
+                if (cur.min_date < ed) {
+                    next[i].remove();
+                    container.append(getTaskBar.call(this, cur, size, st, ed));
+                }
             }
         }
     }
@@ -432,7 +509,7 @@ function TaskController() {
     function List() {
         document.title = this.db.name;
         tasks.innerHTML = "";
-        this.db.Query(()=>!0).forEach(function(task) {
+        this.db.TaskTree().forEach(function(task) {
             tasks.append(getTaskTag.call(self, task));
         })
     }
@@ -457,6 +534,9 @@ function TaskController() {
     this.Bind = Bind;
     this.List = List;
     this.Show = Show;
+    
+    this.AddFirstDateTask = AddFirstDateTask;
+    this.AddLastDateTask = AddLastDateTask;
 
     this.AddPad = PadTest;
 }
@@ -471,7 +551,7 @@ function DateController() {
     let lastDate, nextDate;
     this.OnLastChange = undefined;
     this.OnFirstChange = undefined;
-
+    
     function shiftDate(unit) {
         if (type == "date") {
             return (date) => Date.prototype.addDate.call(date, unit);
@@ -491,12 +571,29 @@ function DateController() {
         taskFill.classList.add('task-fill');
         taskDate.dataset["date"] = converter.GetString(date);
         task.append(taskDate, taskFill);
-        task.dataset["date"] = date.toISOString();
+        task.dataset["date"] = date.toLocalISOString();
         return task;
+    }
+
+    function computeScaler(min, max) {
+        let d1 = converter.GetDate(min);
+        let d2 = nextDate(d1);
+        let d3 = converter.GetDate(max);
+        let d4 = nextDate(d3);
+        function _(a, b, c) {
+            a = a.getTime();
+            b = b.getTime();
+            c = c.getTime();
+            return (a - b) / (c - b);
+        }
+        let minPos = _(min, d1, d2), maxPos = _(max, d3, d4);
+        for (let x = max; d2 <= x; maxPos += 1, d2 = nextDate(d2));
+        return [minPos, maxPos];
     }
 
     function insertLast(lTask) {
         let t = new Date(lTask.dataset["date"]);
+        t = t.addMinutes(t.getTimezoneOffset());
         let st = nextDate(t);
         let last = getColumn.call(this, st);
         lTask.after(last);
@@ -505,14 +602,37 @@ function DateController() {
             this.OnLastChange.call(this, last, st, ed);
         }
     }
-
+    
+    function removeFirst(fTask) {
+        let next = fTask.nextElementSibling;
+        if (next) {
+            let unit = next.width;
+            let items = fTask.querySelectorAll('.task-bar');
+            let container = next.querySelector('.task-fill');
+            for (let i = 0; i < items.length; i++) {
+                let id = items[i].dataset['index'];
+                let task = this.db.source[id];
+                let min = new Date(next.dataset['date']), max = task.max_date;
+                min = min.addMinutes(min.getTimezoneOffset());
+                if (min < max) {
+                    let new_pos = computeScaler(min, max);
+                    items[i].style.marginLeft = unit * new_pos[0] + "px";
+                    items[i].style.width = unit * (new_pos[1] - new_pos[0]) - 1 + "px";
+                    container.append(items[i]);
+                }
+            }
+        }
+        fTask.remove();
+    }
+    
     function insertFirst(fTask) {
         let t = new Date(fTask.dataset["date"]);
+        t = t.addMinutes(t.getTimezoneOffset());
         let st = lastDate(t);
         let first = getColumn.call(this, st);
         fTask.before(first);
         if (typeof(this.OnFirstChange) === "function") {
-            this.OnFirstChange(this, first, st, t);
+            this.OnFirstChange.call(this, first, st, t);
         }
     }
 
@@ -527,16 +647,16 @@ function DateController() {
         view.innerHTML = '';
         let c = 2 + parseInt(document.documentElement.getComputedValue('--show-count'));
         date = lastDate(date);
-        st_time = date.getTime();
+        let st = date;
         for (let i = 0; i < c; i++) {
             view.append(getColumn.call(this, date));
             date = nextDate(date);
         }
-        ed_time = date.getTime();
+        let ed = date;
         let tasks = this.db.Query(function(task) {
-            let t1 = task.start_time.getTime();
-            let t2 = task.end_time.getTime();
-            return st_time <= t1 && t1 < ed_time || st_time <= t2 && t2 < ed_time || t1 <= st_time && ed_time < t2;
+            let t1 = task.start_time;
+            let t2 = task.end_time;
+            return st <= t1 && t1 < ed || st <= t2 && t2 < ed || t1 <= st && ed < t2;
         });
         preSize = view.firstElementChild.width;
         view.posX = -preSize;
@@ -568,14 +688,14 @@ function DateController() {
         let lTask = view.lastElementChild;
         if ((xMin - fTask.right) > 20) {
             x += fTask.width;
-            fTask.remove();
+            removeFirst.call(self, fTask);
             curr_date = nextDate(curr_date);
-            insertLast(lTask);
+            insertLast.call(self, lTask);
         } else if ((lTask.left - xMax) > 20) {
             x -= lTask.width;
             lTask.remove();
             curr_date = lastDate(curr_date);
-            insertFirst(fTask);
+            insertFirst.call(self, fTask);
         }
         view.posX = x;
     }
@@ -614,6 +734,7 @@ function DateController() {
 
     window.addEventListener('resize', ()=>Update());
 
+    this.computeScaler = computeScaler;
     this.Bind = Bind;
     this.Switch = Switch;
     this.Update = Update;
@@ -630,6 +751,8 @@ addEventListener('load', function() {
     date.Switch();
     task.List();
     task.AddPad(5);
+    date.OnLastChange = task.AddLastDateTask;
+    date.OnFirstChange = task.AddFirstDateTask;
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);
     document.getElementById("numTasks").addEventListener('change', function(e) {
         date.Update(e.target.valueAsNumber);

@@ -10,7 +10,7 @@
     --list-br: #000;
     --list-name-bg: #fff;
     --list-width: 12.5vw;
-    --show-count: 7;
+    --show-count: 10;
     --show-width: calc(calc(100vw - var(--list-width) - 2px) / var(--show-count));
     --side-bg: chocolate;
     --side-br: darkred;
@@ -189,14 +189,14 @@ label[for="DateFormat"] > span:last-of-type {
     overflow: hidden;
     white-space: nowrap;
     padding: 0 0.5em;
-    border-bottom: 1px solid var(--list-br);
+    border-top: 1px solid var(--list-br);
     background-color: var(--list-name-bg);
 }
 #tasks-list *[data-task-name]::before {
     content: attr(data-task-name);
 }
-#tasks-list *[data-task-name]:nth-child(1) {
-    border-top: 1px solid var(--list-br);
+#tasks-list *[data-task-name]:nth-last-child(1) {
+    border-bottom: 1px solid var(--list-br);
 }
 .tasks-container {
     clip-path: inset(0);
@@ -230,6 +230,8 @@ label[for="DateFormat"] > span:last-of-type {
 .task-fill {
     height: 100%;
     padding-top: calc(2em + 1px);
+    position: relative;
+    margin-top: 1px;
 }
 #task-side {
     min-width: 0;
@@ -327,6 +329,11 @@ label[for="DateFormat"] > span:last-of-type {
 .task-pad.minima label:not(:first-of-type), .task-pad.minima label:first-of-type span, .task-pad.minima .rm-icon {
     display: none;
 }
+.task-pad > .task-btn-container {
+    margin: 0 1em 1em 1em;
+    display: flex;
+    justify-content: space-evenly;
+}
 .minima {
     position: absolute;
     margin: 0;
@@ -351,10 +358,15 @@ label[for="DateFormat"] > span:last-of-type {
     height: 2em;
 }
 .task-bar {
+    --task-bar-left: 0;
+    --task-bar-right: 0;
+    z-index: 1;
     outline: 1px solid #000;
     height: 2em;
     position: absolute;
     background: green;
+    width: calc(var(--show-width) * (var(--task-bar-right) - var(--task-bar-left)) - 1px);
+    margin-left: calc(var(--show-width) * var(--task-bar-left));
 }
 .plus-button {
     position: fixed;

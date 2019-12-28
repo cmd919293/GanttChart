@@ -8,10 +8,11 @@
     --view-br: #000;
     --list-bg: #eee;
     --list-br: #000;
+    --list-depth: 1;
     --list-name-bg: #fff;
     --list-width: 12.5vw;
-    --show-count: 10;
-    --show-width: calc(calc(100vw - var(--list-width) - 2px) / var(--show-count));
+    --show-count: 7;
+    --show-width: calc(calc(100vw - var(--list-width)) / var(--show-count));
     --side-bg: chocolate;
     --side-br: darkred;
     --side-pd: 0.75em;
@@ -49,51 +50,51 @@ body {
     flex-grow: 1;
 }
 .menu {
-	display: table-cell;
+    display: table-cell;
     margin: 1px;
     padding: 0 0.5em;
     position: relative;
 }
 .menu:hover {
-	border-color: #cce8ff;
-	background-color: #e5f3ff;
+    border-color: #cce8ff;
+    background-color: #e5f3ff;
 }
 .menu > .group {
-	display:none;
+    display: none;
 }
 .menu:hover > .group {
-	display: block;
+    display: block;
     left: 0;
 }
 .menu::before, .item::after {
-	content: attr(data-text);
+    content: attr(data-text);
 }
 .group {
     display: block;
-	background: #f0f0f0;
-	border: 1px solid #ccc;
-	position: absolute;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    position: absolute;
 }
 .item {
     display: block;
-	border: 1px solid #f0f0f0;
-	line-height: 1.5;
-	padding: 0 0.5em;
+    border: 1px solid #f0f0f0;
+    line-height: 1.5;
+    padding: 0 0.5em;
     margin-left: 1px;
     position: relative;
     min-width: max-content;
 }
 .item:hover {
-	background: #90c8f6;
+    background: #90c8f6;
     z-index: 1;
 }
 .item > .group {
-	display: none;
+    display: none;
     top: -2px;
-	left: 100%;
+    left: 100%;
 }
 .item:hover > .group {
-	display: block;
+    display: block;
 }
 .option > .item::before {
     content: '\2714';
@@ -113,8 +114,7 @@ body {
     top: 0;
     line-height: var(--menu-lh);
     height: var(--menu-hi);
-    border: 1px solid var(--menu-br);
-    border-top: none;
+    border-bottom: 1px solid var(--menu-br);
     background-color: var(--menu-bg);
     padding: 0 0.5em;
     z-index: 1;
@@ -158,7 +158,7 @@ label[for="DateFormat"] > span:last-of-type {
     box-shadow: 0 0 0 1px rgb(77 , 144, 254);
     outline: none;
 }
-#DateFormat::-webkit-slider-thumb{
+#DateFormat::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: calc(1.5em + 4px);
     height: calc(1.5em + 4px);
@@ -173,7 +173,6 @@ label[for="DateFormat"] > span:last-of-type {
 #view {
     padding-top: var(--menu-hi);
     background-color: var(--view-bg);
-    box-shadow: inset 0 0 0 1px var(--view-br);
 }
 #tasks-list {
     min-width: var(--list-width);
@@ -181,16 +180,27 @@ label[for="DateFormat"] > span:last-of-type {
     padding-top: 2em;
     border: 1px solid var(--list-br);
     background-color: var(--list-bg);
+    border-left: none;
+}
+#tasks-list::before {
+    content: "";
+    position: fixed;
+    background-color: inherit;
+    width: var(--show-width);
+    height: 2em;
+    margin-top: -2em;
+    box-shadow: 0px 0px 0 1px #000;
 }
 #tasks-list *[data-task-name] {
-    line-height: 2;
+    --list-level: 0; line-height: 2;
+    height: 2em;
     text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
     padding: 0 0.5em;
     border-top: 1px solid var(--list-br);
-    background-color: var(--list-name-bg);
+    background-color: hsl(calc(360 * var(--list-level) / var(--list-depth)), 100%, 75%);
 }
 #tasks-list *[data-task-name]::before {
     content: attr(data-task-name);
@@ -201,11 +211,13 @@ label[for="DateFormat"] > span:last-of-type {
 .tasks-container {
     clip-path: inset(0);
     overflow-x: hidden;
+    background-color: inherit;
 }
 #tasks-view {
     height: 100%;
     position: relative;
     user-select: none;
+    background-color: inherit;
 }
 #tasks-view * {
     user-select: auto;
@@ -216,16 +228,17 @@ label[for="DateFormat"] > span:last-of-type {
     border: 1px solid #000;
     border-left-width: 0;
     box-sizing: border-box;
+    background-color: inherit;
 }
-.task-date {
+.task::before {
+    content: attr(data-text);
     position: fixed;
+    z-index: 2;
+    background-color: inherit;
     width: var(--show-width);
     line-height: 2;
     text-align: center;
-    border-bottom: 1px solid #000;
-}
-.task-date::before {
-    content: attr(data-date);
+    box-shadow: 0px 0px 0 1px #000;
 }
 .task-fill {
     height: 100%;
@@ -358,9 +371,7 @@ label[for="DateFormat"] > span:last-of-type {
     height: 2em;
 }
 .task-bar {
-    --task-bar-left: 0;
-    --task-bar-right: 0;
-    z-index: 1;
+    --task-bar-left: 0; --task-bar-right: 0; z-index: 1;
     outline: 1px solid #000;
     height: 2em;
     position: absolute;
@@ -370,11 +381,10 @@ label[for="DateFormat"] > span:last-of-type {
 }
 .plus-button {
     position: fixed;
-    right: 2vw;
-    bottom: 2vw;
-    height: 3vw;
-    width: 3vw;
-    line-height: 3vw;
+    right: 30px;
+    bottom: 30px;
+    height: 40px;
+    width: 40px;
     border-radius: 50%;
     border: none;
     background-color: #dad;

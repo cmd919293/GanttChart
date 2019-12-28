@@ -353,14 +353,19 @@ function Database() {
 
     function TaskTree() {
         let tasks = [];
+        let level = 0;
+        let depth = 0;
         function _(tree) {
+            level++;
             for (let i in tree) {
-                tasks.push(this.GetDataById(i));
+                tasks.push([this.GetDataById(i), level - 1]);
+                depth = level > depth ? level : depth;
                 _.call(this, tree[i]);
             }
+            level--;
         }
         _.call(this, this.tree);
-        return tasks;
+        return [tasks, depth];
     }
 
     function GetDataById(id) {
@@ -382,9 +387,9 @@ function Database() {
             "tasks":[
                 {"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named aaa","pid":0},
                 {"id":2,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named bbb","pid":1},
-                {"id":3,"name":"ccc","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ccc","pid":0},
-                {"id":4,"name":"ddd","start_time":"2019-12-25T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ddd","pid":3},
-                {"id":5,"name":"eee","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named eee","pid":3}
+                {"id":3,"name":"ccc","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ccc","pid":2},
+                {"id":4,"name":"ddd","start_time":"2019-12-25T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ddd","pid":1},
+                {"id":5,"name":"eee","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named eee","pid":2}
             ]});
     }
 
@@ -418,6 +423,7 @@ function TaskController() {
             ['End', 'input', {type: 'date', required: 'true'}],
             ['Description', 'textarea']
         ];
+        let inputs = {};
         dict = dict.map((a, id) => {
             let label = document.createElement('label');
             let span = document.createElement('span');
@@ -425,6 +431,7 @@ function TaskController() {
             span.textContent = a[0];
             Object.entries(a[2] || {}).forEach(i => ele.setAttribute(...i));
             label.append(span, ele);
+            inputs[a[0]] = ele;
             return label;
         });
         rm.addEventListener('click', function(e) {
@@ -452,8 +459,20 @@ function TaskController() {
                     this.style.left = "";
                     this.style.top = "";
                 } else {
-                    document.getElementById('tasks-view').addEventListener('mouseenter', function(e) {
-                        console.log(e);
+                    this.hidden = true;
+                    document.getElementById('tasks-view').addEventListener('mouseover', function(e) {
+                        let task = {
+                            "name": inputs.Name.value,
+                            "start_time": inputs.Start.valueAsDate,
+                            "end_time": inputs.End.valueAsDate,
+                            "description": inputs.Description.value
+                        }
+                        if (e.target.classList.contains('task-bar')) {
+                            task["pid"] = e.target.dataset['index'];
+                        }
+                        self.db.Insert(task);
+                        self.Redraw();
+                        pad.remove();
                     }, {once: true});
                 }
             },
@@ -478,7 +497,7 @@ function TaskController() {
         return pad;
     }
 
-    function getTaskTag(task) {
+    function getTaskTag(task, level) {
         let ele = document.createElement('span');
         ele.dataset["taskName"] = task.name;
         ele.dataset["start"] = task.start_time.toLocalISOString();
@@ -487,6 +506,7 @@ function TaskController() {
         ele.dataset["max"] = task.max_date.toLocalISOString();
         ele.dataset["index"] = task.id;
         ele.dataset["pid"] = task.pid;
+        ele.style.setProperty("--list-level", level);
         return ele;
     }
 
@@ -591,9 +611,11 @@ function TaskController() {
     function List() {
         document.title = this.db.name;
         tasks.innerHTML = "";
-        this.db.TaskTree().forEach(function(task) {
-            tasks.append(getTaskTag.call(self, task));
-        })
+        let info = this.db.TaskTree();
+        info[0].forEach(function(task) {
+            tasks.append(getTaskTag.apply(self, task));
+        });
+        document.documentElement.style.setProperty('--list-depth', info[1]);
     }
 
     function Show() {
@@ -737,11 +759,10 @@ function DateController(taskController) {
         let taskDate = document.createElement("div");
         let taskFill = document.createElement("div");
         task.classList.add('task', 'flex', 'flex-column');
-        taskDate.classList.add('task-date');
         taskFill.classList.add('task-fill');
-        taskDate.dataset["date"] = converter.GetString(date);
-        task.append(taskDate, taskFill);
+        task.append(taskFill);
         task.dataset["date"] = date.toLocalISOString();
+        task.dataset["text"] = converter.GetString(date);
         return task;
     }
 

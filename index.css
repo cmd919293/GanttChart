@@ -192,21 +192,21 @@ label[for="DateFormat"] > span:last-of-type {
     box-shadow: 0px 0px 0 1px #000;
 }
 #tasks-list *[data-task-name] {
-    --list-level: 0; line-height: 2;
+    --list-level: 0;
+    line-height: 2;
     height: 2em;
     text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
     padding: 0 0.5em;
-    border-top: 1px solid var(--list-br);
     background-color: hsl(calc(360 * var(--list-level) / var(--list-depth)), 100%, 75%);
+    outline: 1px solid #000;
+    margin-top: 1px;
+    box-sizing: border-box;
 }
 #tasks-list *[data-task-name]::before {
     content: attr(data-task-name);
-}
-#tasks-list *[data-task-name]:nth-last-child(1) {
-    border-bottom: 1px solid var(--list-br);
 }
 .tasks-container {
     clip-path: inset(0);

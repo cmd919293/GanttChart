@@ -303,7 +303,7 @@ function Database() {
         _.call(this, this.tree, path.pop());
     }
 
-    function Delete(id) {
+    function Delete(id, withChild=true) {
         let path = [];
         for (let tmp = this.GetDataById(id);tmp; tmp = this.GetDataById(tmp.pid)) {
             path.push(tmp.id);
@@ -317,7 +317,16 @@ function Database() {
         }
         function _(tree, idx) {
             if (idx == id) {
-                del.call(this, tree[idx]);
+                if (withChild) {
+                    del.call(this, tree[idx]);
+                } else {
+                    let d1 = this.GetDataById(idx);
+                    for (let i in tree[idx]) {
+                        tree[i] = tree[idx][i];
+                        let d2 = this.GetDataById(i);
+                        d2.pid = d1.pid;
+                    }
+                }
                 removeDataById.call(this, idx);
                 delete tree[idx];
             } else {
@@ -388,8 +397,8 @@ function Database() {
                 {"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named aaa","pid":0},
                 {"id":2,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named bbb","pid":1},
                 {"id":3,"name":"ccc","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named ccc","pid":2},
-                {"id":4,"name":"ddd","start_time":"2019-12-25T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ddd","pid":1},
-                {"id":5,"name":"eee","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named eee","pid":2}
+                {"id":4,"name":"ddd","start_time":"2019-12-25T00:00:00.000Z","end_time":"2019-12-27T00:00:00.000Z","description":"this is a task named ddd","pid":3},
+                {"id":5,"name":"eee","start_time":"2019-12-24T00:00:00.000Z","end_time":"2019-12-26T00:00:00.000Z","description":"this is a task named eee","pid":4}
             ]});
     }
 
@@ -500,34 +509,47 @@ function TaskController() {
     function getTaskTag(task, level) {
         let ele = document.createElement('span');
         ele.dataset["taskName"] = task.name;
-        ele.dataset["start"] = task.start_time.toLocalISOString();
-        ele.dataset["end"] = task.end_time.toLocalISOString();
-        ele.dataset["min"] = task.min_date.toLocalISOString();
-        ele.dataset["max"] = task.max_date.toLocalISOString();
         ele.dataset["index"] = task.id;
-        ele.dataset["pid"] = task.pid;
         ele.style.setProperty("--list-level", level);
+        ele.draggable = true;
+        ele.addEventListener('dragstart', function (e) {
+            let tag = e.target;
+            e.dataTransfer.setData("text", tag.dataset['index']);
+            e.effectAllowed = "move";
+        });
+        ele.addEventListener('dragover', function (e) {
+            e.preventDefault();
+        });
+        ele.addEventListener('drop', function (e) {
+            let idx = e.dataTransfer.getData('text');
+            let ele = document.querySelector(`#tasks-list span[data-index='${idx}']`);
+            let data = self.db.GetDataById(idx);
+            let pid = e.target.dataset['index'];
+            if (idx != pid) {
+                self.db.Delete(idx, false);
+                data.pid = pid;
+                data.start_time = data.start_time.toLocalISOString();
+                data.end_time = data.end_time.toLocalISOString();
+                self.db.Insert(data);
+                self.Redraw();
+            }
+        });
         return ele;
     }
 
     function getTaskBar(task, left) {
         let min = task.min_date, max = task.max_date;
-        if (min < left) {
-            min = left;
-        }
+        if (min < left)  min = left;
         let position = this.computeScaler(min, max);
         let first = document.querySelector("#tasks-list > span:first-of-type");
         let top = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
-        top = top.offsetTop - top.clientHeight - 1;
+        top = top.offsetTop - top.clientHeight - 2;
         let div = document.createElement('div');
         div.classList.add('task-bar');
         div.style.setProperty("--task-bar-left", position[0]);
         div.style.setProperty("--task-bar-right", position[1]);
         div.style.top = top + 'px';
         div.dataset['index'] = task.id;
-        div.dataset['name'] = task.name;
-        div.dataset['min'] = task.min_date.toLocalISOString();
-        div.dataset['max'] = task.max_date.toLocalISOString();
         div.addEventListener('dblclick', function () {
             showEditWindow.call(this, task);
         });

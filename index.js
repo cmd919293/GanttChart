@@ -738,6 +738,28 @@ function TaskController() {
         }
     });
 
+    document.getElementById('task-side').addEventListener('wheel', function (e) {
+        let mt = parseFloat(this.style.marginTop) || 0;
+        mt -= e.deltaY;
+        if (e.deltaY > 0) {
+            let last = this.lastElementChild;
+            let style = window.getComputedStyle(last);
+            let nextY = ['marginTop', 'marginBottom'].reduce((a, b) => a + parseFloat(style[b]), 0) + last.bottom;
+            if (nextY > window.innerHeight) {
+                nextY -= e.deltaY;
+                if (nextY < window.innerHeight) {
+                    mt += window.innerHeight - nextY;
+                }
+            } else {
+                mt += e.deltaY;
+            }
+        } else if (mt > 0) {
+            mt = 0;
+        }
+        this.style.marginTop = mt + 'px';
+        e.preventDefault();
+    }, {passive: false});
+
     this.inject = function (nextDate) {
         nextDateFunc = nextDate;
     }

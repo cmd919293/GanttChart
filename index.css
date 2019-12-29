@@ -253,6 +253,8 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: var(--side-bg);
     padding: var(--side-pd) 0;
     position: fixed;
+    top: 2em;
+    bottom: 0;
     right: 0;
     transition-property: min-width, max-width, padding, border-width;
     transition-duration: 0.25s;
@@ -276,9 +278,6 @@ label[for="DateFormat"] > span:last-of-type {
 #task-side:not(.show) > .task-pad {
     width: 0;
     border-width: 0;
-}
-#task-side > .task-pad:last-of-type {
-    margin-bottom: 0;
 }
 .drag-icon {
     position: absolute;

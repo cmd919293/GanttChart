@@ -517,23 +517,6 @@ function TaskController() {
             e.dataTransfer.setData("text", tag.dataset['index']);
             e.effectAllowed = "move";
         });
-        ele.addEventListener('dragover', function (e) {
-            e.preventDefault();
-        });
-        ele.addEventListener('drop', function (e) {
-            let idx = e.dataTransfer.getData('text');
-            let ele = document.querySelector(`#tasks-list span[data-index='${idx}']`);
-            let data = self.db.GetDataById(idx);
-            let pid = e.target.dataset['index'];
-            if (idx != pid) {
-                self.db.Delete(idx, false);
-                data.pid = pid;
-                data.start_time = data.start_time.toLocalISOString();
-                data.end_time = data.end_time.toLocalISOString();
-                self.db.Insert(data);
-                self.Redraw();
-            }
-        });
         return ele;
     }
 
@@ -735,6 +718,25 @@ function TaskController() {
             view.append(taskPad.call(self));
         }
     }
+
+    tasks.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+
+    tasks.addEventListener('drop', function (e) {
+        let idx = e.dataTransfer.getData('text');
+        let ele = document.querySelector(`#tasks-list span[data-index='${idx}']`);
+        let data = self.db.GetDataById(idx);
+        let pid = e.target.dataset['index'] || "0";
+        if (idx != pid) {
+            self.db.Delete(idx, false);
+            data.pid = pid;
+            data.start_time = data.start_time.toLocalISOString();
+            data.end_time = data.end_time.toLocalISOString();
+            self.db.Insert(data);
+            self.Redraw();
+        }
+    });
 
     this.inject = function (nextDate) {
         nextDateFunc = nextDate;

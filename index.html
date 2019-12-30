@@ -12,7 +12,6 @@
         <input id="openFile" hidden="true" type="file" />
         <button class="plus-button" id="ShowAddTask"></button>
         <div class="align-right">
-            <input type="number" min="1" max="10" value="7" id="numTasks"/>
             <label for="DateFormat">
                 <input type="range" id="DateFormat" min="0" max="2" value="0"/>
                 <span date-text="日"></span>
@@ -36,18 +35,12 @@
                             <div class="item" data-text="Edit"></div>
                         </div>
                     </div>
-                    <div class="item" data-text="View Count">
+                    <div class="item" data-text="Zoom">
                         <div class="group">
-                            <div class="item" data-text="Increase"></div>
-                            <div class="item" data-text="Decrease"></div>
+                            <div class="item" id="increase" data-text="Increase"></div>
+                            <div class="item" id="decrease" data-text="Decrease"></div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="menu" data-text="檢視">
-                <div class="group">
-                    <div class="item" data-text="放大"></div>
-                    <div class="item" data-text="自動換行"></div>
                 </div>
             </div>
         </div>

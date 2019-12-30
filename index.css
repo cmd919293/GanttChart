@@ -13,12 +13,12 @@
     --list-width: 12.5vw;
     --show-count: 7;
     --show-width: calc(calc(100vw - var(--list-width)) / var(--show-count));
-    --side-bg: chocolate;
-    --side-br: darkred;
+    --side-bg: #aaa;
+    --side-br: #777;
     --side-pd: 0.75em;
-    --task-pad-bg: brown;
+    --task-pad-bg: #eee;
     --task-pad-size: 350px;
-    --task-pad-br: #000;
+    --task-pad-br: #333;
     --data-fmt-bg: #eee;
     --data-fmt-br: #333;
     --drag-icon-size: 48px;
@@ -36,6 +36,15 @@ body {
     left: 50% !important;
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
+}
+.fixed-fill {
+    background-color: rgba(0, 0, 0, 0.6);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    z-index: 9999;
 }
 .flex {
     display: flex;
@@ -155,7 +164,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: transparent;
 }
 #DateFormat:focus {
-    box-shadow: 0 0 0 1px rgb(77 , 144, 254);
+    /*box-shadow: 0 0 0 1px rgb(77 , 144, 254);*/
     outline: none;
 }
 #DateFormat::-webkit-slider-thumb {
@@ -186,7 +195,7 @@ label[for="DateFormat"] > span:last-of-type {
     content: "";
     position: fixed;
     background-color: inherit;
-    width: var(--show-width);
+    width: var(--list-width);
     height: 2em;
     margin-top: -2em;
     box-shadow: 0px 0px 0 1px #000;
@@ -195,15 +204,18 @@ label[for="DateFormat"] > span:last-of-type {
     --list-level: 0;
     line-height: 2;
     height: 2em;
-    text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    padding: 0 0.5em;
-    background-color: hsl(calc(360 * var(--list-level) / var(--list-depth)), 100%, 75%);
+    padding-right: .5em;
+    padding-left: 1em;
+    background-color: #fff;
     outline: 1px solid #000;
     margin-top: 1px;
     box-sizing: border-box;
+    text-indent: calc(12px * var(--list-level));
+    /*text-align: center;*/
+    /*background-color: hsl(calc(360 * var(--list-level) / var(--list-depth)), 100%, 75%);*/
 }
 #tasks-list *[data-task-name]::before {
     content: attr(data-task-name);
@@ -266,6 +278,7 @@ label[for="DateFormat"] > span:last-of-type {
     border-width: 1px;
 }
 .task-pad {
+    padding-bottom: 1em;
     margin-bottom: var(--side-pd);
     border: 1px solid var(--task-pad-br);
     background-color: var(--task-pad-bg);
@@ -274,6 +287,29 @@ label[for="DateFormat"] > span:last-of-type {
     overflow: hidden;
     transition-property: width, border-width;
     transition-duration: 0.25s;
+}
+.task-pad * {
+    font-family: serif;
+    font-size: medium;
+}
+.task-btn {
+    line-height: 2;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    width: 5em;
+    border-radius: 8px;
+    color: #1a73e8;
+}
+.task-btn:focus {
+    outline: none;
+}
+.task-btn:active {
+    background-color: #aaa;
+}
+.task-btn.highlight {
+    background: #1a73e8;
+    color: #fff;
+    border-color: #1a73e8;
 }
 #task-side:not(.show) > .task-pad {
     width: 0;
@@ -284,7 +320,7 @@ label[for="DateFormat"] > span:last-of-type {
     left: 0;
     top: 0;
     width: var(--drag-icon-size);
-    height: var(--drag-icon-size);
+    height: calc(var(--drag-icon-size) - 1px);
     user-select: none;
     background-image: linear-gradient(#000 50%, #00000000 50%);
     background-size: var(--drag-br-width) var(--drag-br-width);
@@ -301,11 +337,25 @@ label[for="DateFormat"] > span:last-of-type {
     content: "";
     width: 50%;
     height: 2px;
-    background-color: black;
-    transform: translate(-50%, -50%);
+    background-color: #f00;
+    transform: translate(-50%, -50%) rotate(45deg);
     position: absolute;
     left: 50%;
     top: 50%;
+}
+.rm-icon::after {
+    content: "";
+    width: 2px;
+    height: 50%;
+    background-color: #f00;
+    transform: translate(-50%, -50%) rotate(45deg);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+.fixed-fill .task-pad {
+    border-radius: 8px;
+    padding: 0;
 }
 .task-pad label {
     display: grid;
@@ -315,7 +365,7 @@ label[for="DateFormat"] > span:last-of-type {
     grid-template-columns: 1fr 2fr;
 }
 .task-pad label:last-of-type {
-    grid-template-rows: 1fr 5em;
+    grid-template-rows: 1fr 7em;
 }
 .task-pad label:last-of-type span {
     padding-bottom: 0.5em;
@@ -332,17 +382,13 @@ label[for="DateFormat"] > span:last-of-type {
 }
 .task-pad label textarea {
     resize: none;
-    height: 5em;
     grid-column-start: span 2;
-}
-.task-pad input:invalid {
-    outline: 5px solid #f00;
 }
 .task-pad.minima label:not(:first-of-type), .task-pad.minima label:first-of-type span, .task-pad.minima .rm-icon {
     display: none;
 }
 .task-pad > .task-btn-container {
-    margin: 0 1em 1em 1em;
+    margin: 1em;
     display: flex;
     justify-content: space-evenly;
 }
@@ -370,11 +416,13 @@ label[for="DateFormat"] > span:last-of-type {
     height: 2em;
 }
 .task-bar {
-    --task-bar-left: 0; --task-bar-right: 0; z-index: 1;
+    --task-bar-left: 0;
+    --task-bar-right: 0;
+    z-index: 1;
     outline: 1px solid #000;
     height: 2em;
     position: absolute;
-    background: green;
+    background: #0a0;
     width: calc(var(--show-width) * (var(--task-bar-right) - var(--task-bar-left)) - 1px);
     margin-left: calc(var(--show-width) * var(--task-bar-left));
 }
@@ -386,18 +434,19 @@ label[for="DateFormat"] > span:last-of-type {
     width: 40px;
     border-radius: 50%;
     border: none;
-    background-color: #dad;
+    background-color: #ccc;
+    transition-property: right;
+    transition-duration: 0.5s;
 }
 .plus-button:active {
-    background-color: #a7a;
+    background-color: #999;
 }
 .plus-button:focus {
-    box-shadow: 0 0 0 1px rgb(77 , 144, 254);
+    /*box-shadow: 0 0 0 1px rgb(77 , 144, 254);*/
     outline: none;
 }
 .plus-button::before, .plus-button::after {
     content: "";
-    display: block;
     width: 50%;
     height: 2px;
     background: #fff;
@@ -409,4 +458,43 @@ label[for="DateFormat"] > span:last-of-type {
 .plus-button::after {
     height: 50%;
     width: 2px;
+}
+.right-arrow {
+    position: fixed;
+    right: calc(30px + var(--task-pad-size) + var(--side-pd));
+    bottom: 30px;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: #ccc;
+    transition-property: right;
+    transition-duration: 0.5s;
+}
+.right-arrow:active {
+    background-color: #999;
+}
+.right-arrow:focus {
+    /*box-shadow: 0 0 0 1px rgb(77 , 144, 254);*/
+    outline: none;
+}
+.right-arrow::before, .right-arrow::after {
+    content: "";
+    width: 50%;
+    height: 2px;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+.right-arrow::after {
+    height: 30%;
+    width: 30%;
+    border-color: #fff;
+    border-style: solid;
+    border-width: 0 2px 2px 0;
+    background: none;
+    transform-origin: right bottom;
+    transform: translate(-20%, -100%) rotate(-45deg);
 }

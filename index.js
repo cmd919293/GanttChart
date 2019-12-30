@@ -420,7 +420,7 @@ function TaskController() {
     let nextDateFunc = undefined;
 
     function taskPad() {
-        let pad = document.createElement('div');
+        let pad = document.createElement('form');
         pad.classList.add('task-pad');
         let icon = document.createElement('div');
         icon.classList.add('drag-icon');
@@ -464,10 +464,8 @@ function TaskController() {
             },
             end: function(e) {
                 this.style.zIndex = "";
-                if (!this.classList.contains('minima')) {
-                    this.style.left = "";
-                    this.style.top = "";
-                } else {
+                let valid = this.checkValidity();
+                if (this.classList.contains('minima') && valid) {
                     this.hidden = true;
                     document.getElementById('tasks-view').addEventListener('mouseover', function(e) {
                         let task = {
@@ -483,6 +481,11 @@ function TaskController() {
                         self.Redraw();
                         pad.remove();
                     }, {once: true});
+                } else {
+                    this.classList.remove('minima');
+                    this.style.left = "";
+                    this.style.top = "";
+                    this.reportValidity();
                 }
             },
             callback: function(e, offset) {
@@ -625,25 +628,30 @@ function TaskController() {
 
     function Show() {
         let view = document.getElementById('task-side');
+        let btn = document.getElementById('ShowAddTask');
         if (view.classList.contains('show')) {
             view.querySelectorAll('.task-pad').forEach(a => a.posX = a.posY = 0);
             view.classList.remove('show');
+            btn.classList.remove('right-arrow');
         } else {
             view.classList.add('show');
+            btn.classList.add('right-arrow');
         }
     }
 
     function showEditWindow(task) {
-        let pad = document.createElement('div');
+        let div = document.createElement('div');
+        let pad = document.createElement('form');
         let rm = document.createElement('div');
         let btnList = document.createElement('div');
         let apply = document.createElement('button');
         let cancel = document.createElement('button');
         let reset = document.createElement('button');
+        div.classList.add('fixed-fill');
         pad.classList.add('task-pad', 'fixed-center');
         rm.classList.add('rm-icon');
         btnList.classList.add('task-btn-container');
-        apply.classList.add('task-btn');
+        apply.classList.add('task-btn', 'highlight');
         cancel.classList.add('task-btn');
         reset.classList.add('task-btn');
         apply.textContent = "Apply";
@@ -667,14 +675,11 @@ function TaskController() {
             return label;
         });
         rm.addEventListener('click', function(e) {
-            rm.parentElement.classList.add('fixed-center');
             setTimeout(function() {
                 if (confirm("Are you sure you want to delete this task")) {
                     self.db.Delete(rm.parentElement.dataset['index']);
                     rm.parentElement.remove();
                     self.Redraw();
-                } else {
-                    rm.parentElement.classList.remove('fixed-center');
                 }
             }, 0);
         });
@@ -684,20 +689,24 @@ function TaskController() {
         btnList.append(apply, cancel, reset);
         inputs.End.min = inputs.Start.value;
         apply.addEventListener('click', function() {
-            let origin = self.db.GetDataById(rm.parentElement.dataset['index']);
-            let st = inputs.Start.valueAsDate, ed = inputs.End.valueAsDate;
-            st = st.addMinutes(st.getTimezoneOffset());
-            ed = ed.addMinutes(ed.getTimezoneOffset());
-            origin.name = inputs.Name.value;
-            origin.start_time = st;
-            origin.end_time = ed;
-            origin.description = inputs.Description.value;
-            self.db.Update(origin);
-            self.Redraw();
-            pad.remove();
+            if (pad.checkValidity()) {
+                let origin = self.db.GetDataById(rm.parentElement.dataset['index']);
+                let st = inputs.Start.valueAsDate, ed = inputs.End.valueAsDate;
+                st = st.addMinutes(st.getTimezoneOffset());
+                ed = ed.addMinutes(ed.getTimezoneOffset());
+                origin.name = inputs.Name.value;
+                origin.start_time = st;
+                origin.end_time = ed;
+                origin.description = inputs.Description.value;
+                self.db.Update(origin);
+                self.Redraw();
+                div.remove();
+            } else {
+                pad.reportValidity();
+            }
         });
         cancel.addEventListener('click', function() {
-            pad.remove();
+            div.remove();
         });
         reset.addEventListener('click', function() {
             inputs.Name.value = task.name;
@@ -706,15 +715,20 @@ function TaskController() {
             inputs.End.min = inputs.Start.value;
             inputs.Description.value = task.description;
         });
+        pad.addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
         reset.click();
         pad.dataset['index'] = task.id;
         pad.append(rm, ...dict, btnList);
-        document.body.append(pad);
+        div.append(pad);
+        document.body.append(div);
     }
 
     function PadTest(n=2) {
         let view = document.getElementById('task-side');
-        for(let i = 0; i < n; i++) {
+        let count = view.querySelectorAll('.task-pad').length;
+        for(let i = 0; i < n - count; i++) {
             view.append(taskPad.call(self));
         }
     }
@@ -929,6 +943,20 @@ function DateController(taskController) {
         }
     }
 
+    function ZoomIn() {
+        let c = parseInt(document.documentElement.getComputedValue('--show-count'));
+        c -= 1;
+        if (c < 1) c = 1;
+        Update.call(self, c);
+    }
+
+    function ZoomOut() {
+        let c = parseInt(document.documentElement.getComputedValue('--show-count'));
+        c += 1;
+        if (c > 10) c = 10;
+        Update.call(self, c);
+    }
+
     function Move() {
         let xMin = document.getElementById("tasks-list").right;
         let xMax = window.innerWidth;
@@ -986,6 +1014,8 @@ function DateController(taskController) {
     this.Bind = Bind;
     this.Switch = Switch;
     this.Update = Update;
+    this.ZoomIn = ZoomIn;
+    this.ZoomOut = ZoomOut;
     this.Type = "date";
 }
 
@@ -1004,11 +1034,8 @@ addEventListener('load', function() {
     task.AddPad(5);
     document.getElementById('ShowAddTask').addEventListener('click', task.Show);
 
-    document.getElementById("numTasks").value = parseInt(document.documentElement.getComputedValue('--show-count'));
-    document.getElementById("numTasks").addEventListener('change', function(e) {
-        date.Update(e.target.valueAsNumber);
-    });
-    document.getElementById("numTasks").dispatchEvent(new Event('change'));
+    document.getElementById('increase').addEventListener('click', date.ZoomIn);
+    document.getElementById('decrease').addEventListener('click', date.ZoomOut);
 
     document.getElementById('exitApp').addEventListener('click', ()=>window.close());
     document.getElementById('saveFile').addEventListener('click', ()=> {

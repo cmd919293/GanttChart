@@ -195,6 +195,8 @@ function DateConverter(type) {
 function Database() {
     this.index = 1;
     this.name = "Untitled";
+    this.type = "date";
+    this.offset = -1;
     this.source = {};
     this.tree = {};
 
@@ -202,6 +204,8 @@ function Database() {
         let tasks = obj.tasks;
         this.name = obj.name;
         this.date = obj.date;
+        this.type = obj.type;
+        this.offset = obj.offset;
         this.source = {};
         for (let i = 0; i < tasks.length; i++) {
             Insert.call(this, tasks[i]);
@@ -212,11 +216,17 @@ function Database() {
         return JSON.stringify({
             "name": this.name,
             "date": date ? new Date(date) : new Date(),
+            "type": this.type,
+            "offset": this.offset,
             "tasks": Object.entries(this.source).map(a => {
                 let x = a[1];
                 return ["id", "name", "start_time", "end_time", "description", "pid"].reduce((a, b)=>{
-                    a[b] = x[b];
-                    return a
+                    if (x[b] instanceof Date) {
+                        a[b] = x[b].toLocalISOString();
+                    } else {
+                        a[b] = x[b];
+                    }
+                    return a;
                 }, {});
             })
         });
@@ -393,6 +403,8 @@ function Database() {
         Load.call(this, {
             "name":"Test1",
             "date":"2019-12-25T00:00:00.000Z",
+            "type": "week",
+            "offset": -1,
             "tasks":[
                 {"id":1,"name":"aaa","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-25T00:00:00.000Z","description":"this is a task named aaa","pid":0},
                 {"id":2,"name":"bbb","start_time":"2019-12-23T00:00:00.000Z","end_time":"2019-12-24T00:00:00.000Z","description":"this is a task named bbb","pid":1},
@@ -403,6 +415,11 @@ function Database() {
     }
 
     this.Load = Load;
+    this.LoadLocal = function () {
+        if (localStorage['source']) {
+            this.Load(JSON.parse(localStorage['source']));
+        }
+    }
     this.TaskTree = TaskTree;
     this.GetDataById = GetDataById;
     this.Insert = Insert;
@@ -536,8 +553,9 @@ function TaskController() {
         div.style.setProperty("--task-bar-right", position[1]);
         div.style.top = top + 'px';
         div.dataset['index'] = task.id;
-        div.addEventListener('dblclick', function () {
-            showEditWindow.call(this, task);
+        div.addEventListener('click', function (e) {
+            showContextMenu.call(this, e, task);
+            //showEditWindow.call(this, task);
         });
         return div;
     }
@@ -634,7 +652,7 @@ function TaskController() {
             view.classList.remove('show');
             btn.classList.remove('right-arrow');
         } else {
-            if (view.querySelectorAll('task-pad').length == 0) {
+            if (view.querySelectorAll('.task-pad').length == 0) {
                 view.append(taskPad.call(self));
             }
             view.classList.add('show');
@@ -647,9 +665,9 @@ function TaskController() {
         let pad = document.createElement('form');
         let rm = document.createElement('div');
         let btnList = document.createElement('div');
-        let apply = document.createElement('button');
-        let cancel = document.createElement('button');
-        let reset = document.createElement('button');
+        let apply = document.createElement('span');
+        let cancel = document.createElement('span');
+        let reset = document.createElement('span');
         div.classList.add('fixed-fill');
         pad.classList.add('task-pad', 'fixed-center');
         rm.classList.add('rm-icon');
@@ -726,6 +744,39 @@ function TaskController() {
         pad.append(rm, ...dict, btnList);
         div.append(pad);
         document.body.append(div);
+    }
+
+    function showContextMenu(e, task) {
+        let x = e.pageX, y = e.pageY;
+        let ww = Math.max(document.documentElement.offsetWidth, window.innerWidth),
+            wh = Math.max(document.documentElement.offsetHeight, window.innerHeight);
+        let menu = document.createElement('div');
+        let finish = document.createElement('span');
+        finish.textContent = "Finish";
+        let edit = document.createElement('span');
+        edit.textContent = "Edit";
+        edit.addEventListener('click', function () {
+            showEditWindow(task);
+            menu.remove();
+        }, {once: true});
+        window.addEventListener('mousedown', function (e) {
+            if (!e.path.includes(menu)) {
+                menu.remove();
+            }
+        }, {once: true});
+        menu.classList.add('contextmenu');
+        menu.append(finish, edit);
+        document.body.append(menu);
+        let rect = menu.getBoundingClientRect();
+        let mw = rect.width, mh = rect.height;
+        if (mw + x > ww) {
+            x = ww - x;
+        }
+        if (mh + y > wh) {
+            y = wh - y;
+        }
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
     }
 
     function AddPad() {
@@ -918,7 +969,7 @@ function DateController(taskController) {
             return st <= t1 && t1 < ed || st <= t2 && t2 < ed || t1 <= st && ed < t2;
         });
         preSize = view.firstElementChild.width;
-        view.posX = -preSize;
+        self.Offset = -preSize;
         insertTaskBar.call(self, view);
     }
 
@@ -933,7 +984,7 @@ function DateController(taskController) {
         let sx = size / preSize;
         let x = view.posX * sx;
         preSize = size;
-        view.posX = x;
+        self.Offset = x;
         let lTask = view.lastElementChild;
         while (lTask.right < xMax) {
             lTask = insertLast.call(self, lTask);
@@ -974,7 +1025,15 @@ function DateController(taskController) {
             curr_date = lastDate(curr_date);
             insertFirst.call(self, fTask);
         }
-        view.posX = x;
+        self.Offset = x;
+    }
+
+    function Init() {
+        let offset = self.db.offset;
+        self.Type = self.db.type;
+        self.Switch();
+        self.Offset = view.firstElementChild.width * offset;
+        document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(type);
     }
 
     Object.defineProperty(this, "Type", {
@@ -983,12 +1042,25 @@ function DateController(taskController) {
         },
         set(fmt) {
             if (["date", "week", "month"].includes(fmt)) {
-                type = fmt;
-                converter.Type = fmt;
+                self.db.type = type = converter.Type = fmt;
                 lastDate = shiftDate(-1);
                 nextDate = shiftDate(+1);
                 taskCtrl.inject(nextDate);
+                offset = view.posX;
+                self.Switch(curr_date);
+                self.Offset = offset;
             }
+        }
+    });
+
+    Object.defineProperty(this, "Offset", {
+        get() {
+            return view.posX;
+        },
+        set(v) {
+            let w = view.firstElementChild.width;
+            view.posX = v;
+            self.db.offset = v / w;
         }
     });
 
@@ -1002,35 +1074,38 @@ function DateController(taskController) {
 
     document.getElementById('DateFormat').addEventListener('change', function(e) {
         let x = ["date", "week", "month"][this.valueAsNumber];
-        offset = view.posX;
         self.Type = x;
-        self.Switch(curr_date);
-        view.posX = offset;
     });
 
     window.addEventListener('resize', ()=>Update());
 
     this.computeScaler = computeScaler;
+    this.Init = Init;
     this.Bind = Bind;
     this.Switch = Switch;
     this.Update = Update;
     this.ZoomIn = ZoomIn;
     this.ZoomOut = ZoomOut;
-    this.Type = "date";
 }
 
 addEventListener('load', function() {
     let task = new TaskController();
     let date = new DateController(task);
     let data = new Database();
-    data.Test();
+    if (localStorage['source']) {
+        console.log('found local file');
+        data.LoadLocal();
+    } else {
+        console.log('local file not found, load test file');
+        data.Test();
+    }
     date.OnLastChange = task.AddLastDateTask;
     date.OnFirstChange = task.AddFirstDateTask;
     date.OnDateSwitch = task.AddTaskBar;
     task.Bind(data, date);
     date.Bind(data);
     task.List();
-    date.Switch();
+    date.Init();
 
     document.getElementById('AddTaskPad').addEventListener('click', task.AddPad);
     document.getElementById('ShowTaskSide').addEventListener('click', task.Show);
@@ -1062,10 +1137,17 @@ addEventListener('load', function() {
             reader.addEventListener('load', function(){
                 let r = JSON.parse(this.result);
                 data.Load(r);
+                let x = data.offset;
+                document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(date.Type = data.type);
                 date.Switch(data.date);
+                date.Offset *= -x;
                 task.List();
             });
             reader.readAsText(file[0]);
         }
+        this.value = "";
+    });
+    window.addEventListener('beforeunload', function () {
+        localStorage['source'] = data.Save(date.Date);
     });
 });

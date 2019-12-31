@@ -10,7 +10,9 @@
 <body>
     <div id="menu">
         <input id="openFile" hidden="true" type="file" />
-        <button class="plus-button" id="ShowTaskSide"></button>
+        <div class="left-arrow" id="ShowTaskSide"></div>
+        <div class="plus-button" id="increase"></div>
+        <div class="minus-button" id="decrease"></div>
         <div class="align-right">
             <label for="DateFormat">
                 <input type="range" id="DateFormat" min="0" max="2" value="0"/>
@@ -27,7 +29,7 @@
                     <div class="item" id="exitApp" data-text="Exit"></div>
                 </div>
             </div>
-            <div class="menu" data-text="View">
+            <!--div class="menu" data-text="View">
                 <div class="group">
                     <div class="item" data-text="Mode">
                         <div class="group option">
@@ -37,12 +39,10 @@
                     </div>
                     <div class="item" data-text="Zoom">
                         <div class="group">
-                            <div class="item" id="increase" data-text="Increase"></div>
-                            <div class="item" id="decrease" data-text="Decrease"></div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div-->
         </div>
     </div>
     <div id="view" class="container flex flex-row flex-fill">

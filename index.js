@@ -628,12 +628,15 @@ function TaskController() {
 
     function Show() {
         let view = document.getElementById('task-side');
-        let btn = document.getElementById('ShowAddTask');
+        let btn = document.getElementById('ShowTaskSide');
         if (view.classList.contains('show')) {
             view.querySelectorAll('.task-pad').forEach(a => a.posX = a.posY = 0);
             view.classList.remove('show');
             btn.classList.remove('right-arrow');
         } else {
+            if (view.querySelectorAll('task-pad').length == 0) {
+                view.append(taskPad.call(self));
+            }
             view.classList.add('show');
             btn.classList.add('right-arrow');
         }
@@ -677,8 +680,8 @@ function TaskController() {
         rm.addEventListener('click', function(e) {
             setTimeout(function() {
                 if (confirm("Are you sure you want to delete this task")) {
-                    self.db.Delete(rm.parentElement.dataset['index']);
-                    rm.parentElement.remove();
+                    self.db.Delete(pad.dataset['index']);
+                    div.remove();
                     self.Redraw();
                 }
             }, 0);
@@ -725,12 +728,9 @@ function TaskController() {
         document.body.append(div);
     }
 
-    function PadTest(n=2) {
+    function AddPad() {
         let view = document.getElementById('task-side');
-        let count = view.querySelectorAll('.task-pad').length;
-        for(let i = 0; i < n - count; i++) {
-            view.append(taskPad.call(self));
-        }
+        view.append(taskPad.call(self));
     }
 
     tasks.addEventListener('dragover', function (e) {
@@ -788,7 +788,7 @@ function TaskController() {
     this.AddLastDateTask = AddLastDateTask;
     this.AddTaskBar = AddTaskBar;
 
-    this.AddPad = PadTest;
+    this.AddPad = AddPad;
 }
 
 function DateController(taskController) {
@@ -1031,8 +1031,9 @@ addEventListener('load', function() {
     date.Bind(data);
     task.List();
     date.Switch();
-    task.AddPad(5);
-    document.getElementById('ShowAddTask').addEventListener('click', task.Show);
+
+    document.getElementById('AddTaskPad').addEventListener('click', task.AddPad);
+    document.getElementById('ShowTaskSide').addEventListener('click', task.Show);
 
     document.getElementById('increase').addEventListener('click', date.ZoomIn);
     document.getElementById('decrease').addEventListener('click', date.ZoomOut);

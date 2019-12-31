@@ -10,7 +10,7 @@
 <body>
     <div id="menu">
         <input id="openFile" hidden="true" type="file" />
-        <button class="plus-button" id="ShowAddTask"></button>
+        <button class="plus-button" id="ShowTaskSide"></button>
         <div class="align-right">
             <label for="DateFormat">
                 <input type="range" id="DateFormat" min="0" max="2" value="0"/>
@@ -50,7 +50,9 @@
         <div class="container tasks-container">
             <div id="tasks-view" class="flex"></div>
         </div>
-        <div id='task-side'></div>
+        <div id='task-side'>
+            <button class="plus-button" id="AddTaskPad"></button>
+        </div>
     </div>
 </body>
 </html>

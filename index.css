@@ -277,6 +277,12 @@ label[for="DateFormat"] > span:last-of-type {
     padding: var(--side-pd);
     border-width: 1px;
 }
+#task-side > .plus-button {
+    display: none;
+}
+#task-side.show > .plus-button {
+    display: block;
+}
 .task-pad {
     padding-bottom: 1em;
     margin-bottom: var(--side-pd);
@@ -437,6 +443,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: #ccc;
     transition-property: right;
     transition-duration: 0.5s;
+    z-index: 1;
 }
 .plus-button:active {
     background-color: #999;

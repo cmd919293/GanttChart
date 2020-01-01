@@ -533,6 +533,11 @@ function TaskController() {
         return pad;
     }
 
+    function makeConnection() {
+        let conn = document.createElement('div');
+        //div.append(conn);
+    }
+
     function getTaskTag(task, level, needPadding) {
         let ele = document.createElement('span');
         ele.dataset["taskName"] = task.name;
@@ -540,6 +545,8 @@ function TaskController() {
         ele.style.setProperty("--list-level", level);
         if (needPadding) {
             ele.style.marginTop = '.75em';
+        } else {
+            ele.style.fontSize = "20px";
         }
         ele.draggable = true;
         ele.addEventListener('click', function() {
@@ -573,8 +580,6 @@ function TaskController() {
         div.addEventListener('click', function (e) {
             showContextMenu.call(this, e, task);
         });
-        let conn = document.createElement('div');
-        //div.append(conn);
         return div;
     }
 
@@ -589,6 +594,7 @@ function TaskController() {
                 let task = tasks[i];
                 container.append(getTaskBar.call(this, task, st));
             }
+            makeConnection.call(this);
         }
     }
 
@@ -616,6 +622,7 @@ function TaskController() {
                 let task = tasks[i];
                 container.append(getTaskBar.call(this, task, st));
             }
+            makeConnection.call(this);
         }
     }
 
@@ -644,6 +651,7 @@ function TaskController() {
                     container.append(getTaskBar.call(this, cur, st));
                 }
             }
+            makeConnection.call(this);
         }
     }
 
@@ -661,7 +669,11 @@ function TaskController() {
             if (task[1] == 0) {
                 c++;
             }
-            tasks.append(getTaskTag.call(self, task[0], task[1], c > 1 && task[1] == 0));
+            let tag = getTaskTag.call(self, task[0], task[1], c > 1 && task[1] == 0);
+            if (c == 1 && task[1] == 0) {
+                tag.style.fontSize = "";
+            }
+            tasks.append(tag);
         });
         document.documentElement.style.setProperty('--list-depth', info[1]);
     }

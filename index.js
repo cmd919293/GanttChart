@@ -547,7 +547,7 @@ function TaskController() {
         }
         ele.draggable = true;
         ele.addEventListener('click', function() {
-            dateCtrl.Switch(task.min_time);
+            dateCtrl.Switch(task.min_date);
         });
         ele.addEventListener('dragstart', function (e) {
             let tag = e.target;

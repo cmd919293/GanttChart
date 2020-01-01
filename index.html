@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, minimum-scale=0.1">
 <title>None</title>
 <script type="text/javascript" src="./index.js" charset="utf-8"></script>
-<link href="./index.css" rel="stylesheet" type="text/css">
+<link href="./index.css" rel="stylesheet">
+<link href="./fontawesome/css/all.css" rel="stylesheet">
 </head>
 <body>
     <div id="menu">
@@ -21,29 +22,8 @@
                 <span date-text="月"></span>
             </label>
         </div>
-        <div>
-            <div class="menu" data-text="File">
-                <div class="group">
-                    <label class="item" for="openFile" data-text="Open"></label>
-                    <div class="item" id="saveFile" data-text="Save"></div>
-                    <div class="item" id="exitApp" data-text="Exit"></div>
-                </div>
-            </div>
-            <!--div class="menu" data-text="View">
-                <div class="group">
-                    <div class="item" data-text="Mode">
-                        <div class="group option">
-                            <div class="item check" data-text="View"></div>
-                            <div class="item" data-text="Edit"></div>
-                        </div>
-                    </div>
-                    <div class="item" data-text="Zoom">
-                        <div class="group">
-                        </div>
-                    </div>
-                </div>
-            </div-->
-        </div>
+        <label class="fas fa-file-import" for="openFile" data-text="Open"></label>
+        <div class="fas fa-file-download" id="saveFile" data-text="Save"></div>
     </div>
     <div id="view" class="container flex flex-row flex-fill">
         <div id="tasks-list" class="flex flex-column"></div>

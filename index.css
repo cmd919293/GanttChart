@@ -1,13 +1,13 @@
 :root {
     --menu-bg: #ddd;
-    --menu-br: #000;
+    --menu-br: #999;
     --menu-lh: 2em;
-    --menu-lc: 1;
+    --menu-lc: 0;
     --menu-hi: calc(var(--menu-lh) * var(--menu-lc));
     --view-bg: #eee;
     --view-br: #000;
     --list-bg: linear-gradient(#e4e, #7cf);
-    --list-br: #000;
+    --list-br: #999;
     --list-depth: 1;
     --list-name-bg: #fff;
     --list-width: 12.5vw;
@@ -19,7 +19,7 @@
     --task-pad-bg: #eee;
     --task-pad-size: 350px;
     --task-pad-br: #333;
-    --data-fmt-bg: #eee;
+    --data-fmt-bg: #ccc;
     --data-fmt-br: #333;
     --drag-icon-size: 48px;
     --drag-br-width: calc(var(--drag-icon-size) / 6);
@@ -32,7 +32,7 @@ html, body {
 body {
     margin: 0;
     overscroll-behavior-y: contain;
-    /* zoom: 1.5; */
+    font-family: sans-serif;
     font-size: 24px;
 }
 .fixed-center {
@@ -139,8 +139,10 @@ body {
 }
 label[for="DateFormat"] {
     display: inline-flex;
+    left: calc(12.5vw + 8px);
+    bottom: 8px;
     justify-content: space-between;
-    position: relative;
+    position: fixed;
     width: 150px;
     line-height: 1.5;
     height: 1.5em;
@@ -238,6 +240,7 @@ label[for="DateFormat"] > span:last-of-type {
 }
 #tasks-view * {
     user-select: auto;
+    color: #333;
 }
 .task {
     min-width: var(--show-width);
@@ -550,4 +553,21 @@ label[for="DateFormat"] > span:last-of-type {
 }
 .contextmenu > *:hover {
     background: #e8eaed;
+}
+label[for='openFile'], #saveFile {
+    position: fixed;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--btn-bg);
+    z-index: 1;
+    line-height: 40px;
+    text-align: center;
+    color: var(--btn-color);
+    right: 30px;
+    bottom: 12em;
+}
+#saveFile {
+    bottom: 10em;
 }

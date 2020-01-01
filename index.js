@@ -1143,7 +1143,7 @@ addEventListener('load', function() {
     document.getElementById('increase').addEventListener('click', date.ZoomIn);
     document.getElementById('decrease').addEventListener('click', date.ZoomOut);
 
-    document.getElementById('exitApp').addEventListener('click', ()=>window.close());
+    //document.getElementById('exitApp').addEventListener('click', ()=>window.close());
     document.getElementById('saveFile').addEventListener('click', ()=> {
         let str = data.Save(date.Date);
         let blob = new Blob([str], {type: "application/json;charset=utf-8"});

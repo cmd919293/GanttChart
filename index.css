@@ -600,6 +600,11 @@ label[for="DateFormat"] > span:last-of-type {
 }
 .contextmenu > *:nth-child(1) {
     font-size: 1rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    max-width: 300px;
+    overflow: hidden;
 }
 #increase, #decrease {
     color: var(--btn-color);

@@ -546,6 +546,9 @@ function TaskController() {
             ele.style.marginTop = '.75em';
         }
         ele.draggable = true;
+        ele.addEventListener('click', function() {
+            dateCtrl.Switch(task.min_time);
+        });
         ele.addEventListener('dragstart', function (e) {
             let tag = e.target;
             e.dataTransfer.setData("text", tag.dataset['index']);

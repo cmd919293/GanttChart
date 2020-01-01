@@ -6,7 +6,7 @@
     --menu-hi: calc(var(--menu-lh) * var(--menu-lc));
     --view-bg: #eee;
     --view-br: #000;
-    --list-bg: linear-gradient(#e4e, #7cf);
+    --list-bg: linear-gradient(rgba(238, 68, 238, 0.75), rgba(119, 204, 255, 0.75));
     --list-br: #999;
     --list-depth: 1;
     --list-name-bg: #fff;

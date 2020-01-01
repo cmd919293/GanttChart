@@ -537,11 +537,14 @@ function TaskController() {
         return pad;
     }
 
-    function getTaskTag(task, level) {
+    function getTaskTag(task, level, needPadding) {
         let ele = document.createElement('span');
         ele.dataset["taskName"] = task.name;
         ele.dataset["index"] = task.id;
         ele.style.setProperty("--list-level", level);
+        if (needPadding) {
+            ele.style.marginTop = '.75em';
+        }
         ele.draggable = true;
         ele.addEventListener('dragstart', function (e) {
             let tag = e.target;
@@ -557,7 +560,7 @@ function TaskController() {
         let position = this.computeScaler(min, max);
         let first = document.querySelector("#tasks-list > span:first-of-type");
         let top = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
-        top = top.offsetTop - top.clientHeight - 2;
+        top = top.offsetTop;
         let div = document.createElement('div');
         div.classList.add('task-bar');
         if (task.finish) {
@@ -652,8 +655,12 @@ function TaskController() {
         document.title = this.db.name;
         tasks.innerHTML = "";
         let info = this.db.TaskTree();
+        let c = 0;
         info[0].forEach(function(task) {
-            tasks.append(getTaskTag.apply(self, task));
+            if (task[1] == 0) {
+                c++;
+            }
+            tasks.append(getTaskTag.call(self, task[0], task[1], c > 1 && task[1] == 0));
         });
         document.documentElement.style.setProperty('--list-depth', info[1]);
     }
@@ -765,7 +772,9 @@ function TaskController() {
         let ww = Math.max(document.documentElement.offsetWidth, window.innerWidth),
             wh = Math.max(document.documentElement.offsetHeight, window.innerHeight);
         let menu = document.createElement('div');
+        let desc = document.createElement('span');
         let finish = document.createElement('span');
+        desc.textContent = task.description;
         finish.textContent = task.finish ? "Undone": "Finish";
         let edit = document.createElement('span');
         edit.textContent = "Edit";
@@ -789,6 +798,7 @@ function TaskController() {
             }
         });
         menu.classList.add('contextmenu');
+        menu.append(desc);
         //let tasks = self.db.Query(function(t) {
         //    return t.pid == task.id;
         //});

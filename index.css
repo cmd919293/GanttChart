@@ -280,6 +280,9 @@ label[for="DateFormat"] > span:last-of-type {
     line-height: 2;
     text-align: center;
     /* box-shadow: 0 -1px 0 1px #999; */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 .task-fill {
     height: 100%;

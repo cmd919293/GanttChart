@@ -168,6 +168,9 @@ Date.prototype.addMinutes = function(value) {
 Date.prototype.toLocalISOString = function() {
     return this.addMinutes(-this.getTimezoneOffset()).toISOString();
 }
+Date.prototype.Equal = function(value) {
+    return this.getTime() == value.getTime();
+}
 
 function DateConverter(type) {
     let input = document.createElement('input');
@@ -534,8 +537,71 @@ function TaskController() {
     }
 
     function makeConnection() {
-        let conn = document.createElement('div');
-        //div.append(conn);
+        function clamp(a, b, c) {
+            if (c < a) {
+                return a;
+            } else if (b < c) {
+                return b;
+            } else {
+                return c;
+            }
+        }
+        function getCenter(ele) {
+            let rect = ele.getBoundingClientRect();
+            return (rect.top + rect.bottom) / 2;
+        }
+        let old = document.querySelectorAll('.task-bar *');
+        let bars = document.querySelectorAll('.task-bar');
+        for (let i = 0; i < bars.length; i++) {
+            let bar = bars[i];
+            let shiftSize = bar.height / 2;
+            let size = bar.parentElement.parentElement.width;
+            let id = parseInt(bar.dataset['index']);
+            let curr = self.db.GetDataById(id);
+            let tasks = self.db.Query(function (task) {
+                return task.pid == id;
+            });
+            let currTag = document.querySelector(`span:not(.task-bar)[data-index='${id}']`);
+            let currCen = getCenter(currTag);
+            for (let j = 0; j < tasks.length; j++) {
+                let div = document.createElement('div');
+                let task = tasks[j];
+                let taskTag = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
+                let taskCen = getCenter(taskTag);
+                let border = ["borderLeftWidth"];
+                let p_pos = clamp(curr.start_time, curr.end_time, task.start_time);
+                let c_pos = clamp(task.start_time, task.end_time, curr.start_time);
+                let position = [];
+                if (c_pos < p_pos){
+                    border.push("borderTopWidth");
+                    position = dateCtrl.computeScaler(c_pos, p_pos);
+                } else {
+                    border.push("borderBottomWidth");
+                    position = dateCtrl.computeScaler(p_pos, c_pos);
+                }
+                let width = (position[1] - position[0]) * size;
+                border.forEach(a => div.style[a] = "1px");
+                let temp = dateCtrl.computeScaler(curr.start_time, p_pos);
+                let shift = (temp[1] - temp[0]) * size ;
+                if (p_pos.Equal(curr.start_time)) {
+                    shift += shiftSize;
+                } else if (p_pos.Equal(curr.end_time)) {
+                    shift -= shiftSize;
+                    width += shiftSize;
+                } else if (c_pos.Equal(task.start_time)) {
+                    shift += shiftSize;
+                }
+                if (c_pos.Equal(task.start_time) && width > 0) {
+                    width += shiftSize;
+                }
+                div.style.left = `${shift}px`;
+                div.style.width = `${width}px`;
+                div.style.height = `${taskCen - currCen}px`;
+                div.style.top = `${shiftSize}px`;
+                bar.append(div);
+            }
+        }
+        old.forEach(a => a.remove());
     }
 
     function getTaskTag(task, level, needPadding) {
@@ -583,7 +649,7 @@ function TaskController() {
         return div;
     }
 
-    function AddLastDateTask(container, st, ed) {
+    function AddLastDateTask(container, st, ed, draw_connection=true) {
         if (self.db) {
             container = container.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
@@ -594,7 +660,9 @@ function TaskController() {
                 let task = tasks[i];
                 container.append(getTaskBar.call(this, task, st));
             }
-            makeConnection.call(this);
+            if (draw_connection) {
+                makeConnection.call(this);
+            }
         }
     }
 
@@ -606,7 +674,7 @@ function TaskController() {
                 let st = new Date(child.dataset["date"]);
                 st = st.addMinutes(st.getTimezoneOffset());
                 let ed = nextDateFunc(st);
-                AddLastDateTask.call(this, child, st, ed);
+                AddLastDateTask.call(this, child, st, ed, false);
             }
             let first = container.firstElementChild;
             let st = new Date(first.dataset["date"]);
@@ -616,7 +684,7 @@ function TaskController() {
             let tasks = self.db.Query(function(task) {
                let t1 = task.start_time;
                let t2 = task.end_time;
-               return t1 < st && (t2 > ed || (st < t2 && t1.getTime() != t2.getTime()));
+               return t1 < st && (t2 > ed || (st < t2 && !t1.Equal(t2)));
             });
             for (let i = 0; i < tasks.length; i++) {
                 let task = tasks[i];
@@ -633,10 +701,10 @@ function TaskController() {
             let tasks = self.db.Query(function(task) {
                 let t1 = task.start_time;
                 let t2 = task.end_time;
-                if (st.getTime() == t1.getTime() && t1.getTime() == t2.getTime()) {
+                if (st.Equal(t1) && t1.Equal(t2)) {
                     return true;
                 } else {
-                    return st < t2 && t2 <= ed && t1.getTime() != t2.getTime();
+                    return st < t2 && t2 <= ed && !t1.Equal(t2);
                 }
             });
             for (let i = 0; i < tasks.length; i++) {
@@ -1200,4 +1268,5 @@ addEventListener('load', function() {
     window.addEventListener('beforeunload', function () {
         localStorage['source'] = data.Save(date.Date);
     });
+    window.xxx = data;
 });

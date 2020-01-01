@@ -507,7 +507,7 @@ label[for="DateFormat"] > span:last-of-type {
     right: 30px;
     bottom: 4.5em;
 }
-.plus-button, .minus-button, .left-arrow, .right-arrow {
+.plus-button, .minus-button, .left-arrow, .right-arrow, #increase, #decrease {
     position: fixed;
     height: 40px;
     width: 40px;
@@ -516,7 +516,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: var(--btn-bg);
     z-index: 1;
 }
-.plus-button:active, .minus-button:active, .left-arrow:active, .right-arrow:active, label[for='openFile']:active, #saveFile:active, #DateFormatBtn > *:active {
+.plus-button:active, .minus-button:active, .left-arrow:active, .right-arrow:active, #increase:active, #decrease:active, label[for='openFile']:active, #saveFile:active, #DateFormatBtn > *:active {
     background-color: #b8b8b8;
 }
 .plus-button:focus, .minus-button:focus, .left-arrow:focus, .right-arrow:focus {
@@ -600,6 +600,11 @@ label[for="DateFormat"] > span:last-of-type {
 }
 .contextmenu > *:nth-child(1) {
     font-size: 1rem;
+}
+#increase, #decrease {
+    color: var(--btn-color);
+    text-align: center;
+    line-height: 40px;
 }
 label[for='openFile'], #saveFile {
     position: fixed;

@@ -886,10 +886,10 @@ function TaskController() {
         let rect = menu.getBoundingClientRect();
         let mw = rect.width, mh = rect.height;
         if (mw + x > ww) {
-            x = ww - x;
+            x = ww - mw;
         }
         if (mh + y > wh) {
-            y = wh - y;
+            y = wh - mh;
         }
         menu.style.left = x + 'px';
         menu.style.top = y + 'px';

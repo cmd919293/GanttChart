@@ -246,6 +246,7 @@ label[for="DateFormat"] > span:last-of-type {
     min-width: var(--show-width);
     max-width: var(--show-width);
     border: 1px solid #999;
+    border-image: linear-gradient(#999, transparent) 1;
     border-left-width: 0;
     box-sizing: border-box;
     background-color: inherit;
@@ -551,8 +552,18 @@ label[for="DateFormat"] > span:last-of-type {
     width: 100%;
     line-height: 2em;
 }
-.contextmenu > *:nth-child(n+2):hover {
+.contextmenu > *:nth-child(n+3):hover {
     background: #e8eaed;
+}
+.contextmenu > hr {
+    background: rgba(0, 0, 0, 0.11);
+    border-width: 0;
+    height: 1px;
+    margin: 8px 0;
+    font-size: 1px;
+}
+.contextmenu > *:nth-child(1) {
+    font-size: 1rem;
 }
 label[for='openFile'], #saveFile {
     position: fixed;

@@ -777,6 +777,7 @@ function TaskController() {
         let menu = document.createElement('div');
         let desc = document.createElement('span');
         let finish = document.createElement('span');
+        let hr = document.createElement('hr');
         desc.textContent = task.description;
         finish.textContent = task.finish ? "Undone": "Finish";
         let edit = document.createElement('span');
@@ -801,7 +802,7 @@ function TaskController() {
             }
         });
         menu.classList.add('contextmenu');
-        menu.append(desc);
+        menu.append(desc, hr);
         //let tasks = self.db.Query(function(t) {
         //    return t.pid == task.id;
         //});

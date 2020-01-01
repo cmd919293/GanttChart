@@ -6,23 +6,23 @@
     --menu-hi: calc(var(--menu-lh) * var(--menu-lc));
     --view-bg: rgba(238, 238, 238, 0);
     --view-br: #000;
-    --list-bg: linear-gradient(rgba(238, 68, 238, 0.3), rgba(119, 204, 255, 0.3));
+    --list-bg: linear-gradient(rgba(238, 68, 238, 0.4), rgba(119, 204, 255, 0.4));
     --list-br: #999;
     --list-depth: 1;
     --list-name-bg: #fff;
     --list-width: 20vw;
     --show-count: 7;
     --show-width: calc(calc(100vw - var(--list-width)) / var(--show-count));
-    --side-bg: #aaa;
+    --side-bg: #aaaaaaaa;
     --side-br: #777;
     --side-pd: 0.75em;
-    --task-pad-bg: #eee;
+    --task-pad-bg: rgba(255, 255, 255, 0.9);
     --task-pad-size: 350px;
     --task-pad-br: #333;
     --data-fmt-bg: #ccc;
     --data-fmt-br: #333;
     --drag-icon-size: 48px;
-    --drag-br-width: calc(var(--drag-icon-size) / 6);
+    --drag-br-width: calc(var(--drag-icon-size) / 8);
     --btn-bg: #797979;
     --btn-color: #f2f2f2;
 }
@@ -290,11 +290,11 @@ label[for="DateFormat"] > span:last-of-type {
 #task-side {
     min-width: 0;
     max-width: 0;
-    border: 0 solid var(--side-br);
+    /* border: 0 solid var(--side-br); */
     background-color: var(--side-bg);
     padding: var(--side-pd) 0;
     position: fixed;
-    top: 2em;
+    top: 0;
     bottom: 0;
     right: 0;
     transition-property: min-width, max-width, padding, border-width;
@@ -315,16 +315,17 @@ label[for="DateFormat"] > span:last-of-type {
 .task-pad {
     padding-bottom: 1em;
     margin-bottom: var(--side-pd);
-    border: 1px solid var(--task-pad-br);
+    /* border: 1px solid var(--task-pad-br); */
     background-color: var(--task-pad-bg);
     width: var(--task-pad-size);
     position: relative;
     overflow: hidden;
+    border-radius: 16px;
     transition-property: width, border-width;
     transition-duration: 0.25s;
 }
 .task-pad * {
-    font-family: serif;
+    font-family: inherit;
     font-size: medium;
 }
 .task-btn {
@@ -360,9 +361,9 @@ label[for="DateFormat"] > span:last-of-type {
     left: 0;
     top: 0;
     width: var(--drag-icon-size);
-    height: calc(var(--drag-icon-size) - 1px);
+    height: var(--drag-icon-size);
     user-select: none;
-    background-image: linear-gradient(#000 50%, #00000000 50%);
+    background-image: linear-gradient(#00000000  50%, #777 50%);
     background-size: var(--drag-br-width) var(--drag-br-width);
     transform: translate(-50%, -50%) rotate(-45deg);
 }
@@ -438,6 +439,7 @@ label[for="DateFormat"] > span:last-of-type {
     padding: 0;
     width: 250px;
     box-sizing: border-box;
+    border-radius: 8px;
 }
 .minima .drag-icon {
     transform: inherit;
@@ -445,9 +447,9 @@ label[for="DateFormat"] > span:last-of-type {
     float: left;
     width: 2em;
     height: 2em;
-    border-right: 1px solid #000;
+    /* border-right: 1px solid #000; */
     cursor: move;
-    background: #0f0;
+    background: rgba(238, 68, 238, 0.5);
 }
 .minima label {
     grid-template-columns: 1fr;
@@ -455,15 +457,20 @@ label[for="DateFormat"] > span:last-of-type {
     box-sizing: inherit;
     height: 2em;
 }
+.minima input {
+    border: none;
+    padding-left: 12px;
+    outline: none;
+}
 .task-bar {
     --task-bar-left: 0;
     --task-bar-right: 0;
     z-index: 1;
     /* outline: 1px solid #000; */
-    box-shadow: 0 0 0 1px #e4e;
+    box-shadow: 0 0 5px 1px #e4e;
     height: 1em;
     position: absolute;
-    background: #e1e8ee;
+    background: #ecf4fa;
     margin: .25em;
     border-radius: 1em;
     width: calc(var(--show-width) * (var(--task-bar-right) - var(--task-bar-left)) - 1px);
@@ -631,4 +638,27 @@ label[for='openFile'], #saveFile {
     display: flex;
     justify-content: space-around;
     bottom: 8px;
+}
+.task-bar > div {
+    position: absolute;
+    border-style: solid;
+    border-color: #f0f;
+    border-width: 0;
+}
+.task-bar > div::before, .task-bar > div::after {
+    display: block;
+    content: "";
+    width: 6px;
+    height: 6px;
+    background-color: #f0f;
+    position: absolute;
+    border-radius: 50%;
+}
+.task-bar > div::after {
+    right: -3px;
+    bottom: -3px;
+}
+.task-bar > div::before {
+    left: -3px;
+    top: -3px;
 }

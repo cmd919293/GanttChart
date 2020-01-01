@@ -380,17 +380,13 @@ function Database() {
         return result;
     }
 
-    function Finish(id) {
-        //TODO
-    }
-
     function TaskTree() {
         let tasks = [];
         let depth = 0;
         function _(tree, level) {
             for (let i in tree) {
                 tasks.push([this.GetDataById(i), level]);
-                depth = level > depth ? level : depth;
+                depth = level + 1 > depth ? level + 1 : depth;
                 _.call(this, tree[i], level + 1);
             }
         }
@@ -547,7 +543,7 @@ function TaskController() {
         }
         ele.draggable = true;
         ele.addEventListener('click', function() {
-            dateCtrl.Switch(task.min_date);
+            dateCtrl.Switch(task.start_time);
         });
         ele.addEventListener('dragstart', function (e) {
             let tag = e.target;
@@ -558,13 +554,14 @@ function TaskController() {
     }
 
     function getTaskBar(task, left) {
-        let min = task.min_date, max = task.max_date;
+        let min = task.start_time, max = task.end_time;
         if (min < left)  min = left;
         let position = this.computeScaler(min, max);
         let first = document.querySelector("#tasks-list > span:first-of-type");
         let top = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
-        top = top.offsetTop;
         let div = document.createElement('div');
+        div.style.zIndex = document.documentElement.getComputedValue('--list-depth') - top.getComputedValue('--list-level');
+        top = top.offsetTop;
         div.classList.add('task-bar');
         if (task.finish) {
             div.classList.add('task-finish');
@@ -575,8 +572,9 @@ function TaskController() {
         div.dataset['index'] = task.id;
         div.addEventListener('click', function (e) {
             showContextMenu.call(this, e, task);
-            //showEditWindow.call(this, task);
         });
+        let conn = document.createElement('div');
+        //div.append(conn);
         return div;
     }
 
@@ -584,7 +582,7 @@ function TaskController() {
         if (self.db) {
             container = container.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
-               let t1 = task.min_date;
+               let t1 = task.start_time;
                return st <= t1 && t1 < ed;
             });
             for (let i = 0; i < tasks.length; i++) {
@@ -610,8 +608,8 @@ function TaskController() {
             let ed = nextDateFunc(st);
             container = first.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
-               let t1 = task.min_date;
-               let t2 = task.max_date;
+               let t1 = task.start_time;
+               let t2 = task.end_time;
                return t1 < st && (t2 > ed || (st < t2 && t1.getTime() != t2.getTime()));
             });
             for (let i = 0; i < tasks.length; i++) {
@@ -626,8 +624,8 @@ function TaskController() {
             let next = container.nextElementSibling.querySelectorAll('.task-fill > .task-bar');
             container = container.querySelector('.task-fill');
             let tasks = self.db.Query(function(task) {
-                let t1 = task.min_date;
-                let t2 = task.max_date;
+                let t1 = task.start_time;
+                let t2 = task.end_time;
                 if (st.getTime() == t1.getTime() && t1.getTime() == t2.getTime()) {
                     return true;
                 } else {
@@ -641,7 +639,7 @@ function TaskController() {
             for (let i = 0; i < next.length; i++) {
                 let bar = next[i];
                 let cur = this.db.GetDataById(bar.dataset['index']);
-                if (cur.min_date < ed) {
+                if (cur.start_time < ed) {
                     next[i].remove();
                     container.append(getTaskBar.call(this, cur, st));
                 }
@@ -802,13 +800,7 @@ function TaskController() {
             }
         });
         menu.classList.add('contextmenu');
-        menu.append(desc, hr);
-        //let tasks = self.db.Query(function(t) {
-        //    return t.pid == task.id;
-        //});
-        //if (tasks.length == 0) {
-            menu.append(finish);
-        //}
+        menu.append(desc, hr, finish);
         menu.append(edit);
         document.body.append(menu);
         let rect = menu.getBoundingClientRect();
@@ -959,7 +951,7 @@ function DateController(taskController) {
             for (let i = 0; i < items.length; i++) {
                 let id = items[i].dataset['index'];
                 let task = this.db.GetDataById(id);
-                let min = new Date(next.dataset['date']), max = task.max_date;
+                let min = new Date(next.dataset['date']), max = task.end_time;
                 min = min.addMinutes(min.getTimezoneOffset());
                 if (min < max) {
                     let new_pos = computeScaler(min, max);
@@ -1077,7 +1069,6 @@ function DateController(taskController) {
         self.Type = self.db.type;
         self.Switch();
         self.Offset = view.firstElementChild.width * offset;
-        //document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(type);
     }
 
     Object.defineProperty(this, "Type", {
@@ -1126,11 +1117,6 @@ function DateController(taskController) {
         self.Type = "month";
     });
 
-    //document.getElementById('DateFormat').addEventListener('change', function(e) {
-    //    let x = ["date", "week", "month"][this.valueAsNumber];
-    //    self.Type = x;
-    //});
-
     window.addEventListener('resize', ()=>Update());
 
     this.computeScaler = computeScaler;
@@ -1167,7 +1153,6 @@ addEventListener('load', function() {
     document.getElementById('increase').addEventListener('click', date.ZoomIn);
     document.getElementById('decrease').addEventListener('click', date.ZoomOut);
 
-    //document.getElementById('exitApp').addEventListener('click', ()=>window.close());
     document.getElementById('saveFile').addEventListener('click', ()=> {
         let str = data.Save(date.Date);
         let blob = new Blob([str], {type: "application/json;charset=utf-8"});
@@ -1192,7 +1177,6 @@ addEventListener('load', function() {
                 let r = JSON.parse(this.result);
                 data.Load(r);
                 let x = data.offset;
-                //document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(date.Type = data.type);
                 date.Switch(data.date);
                 date.Offset *= -x;
                 task.List();

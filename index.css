@@ -32,6 +32,8 @@ html, body {
 body {
     margin: 0;
     overscroll-behavior-y: contain;
+    /* zoom: 1.5; */
+    font-size: 24px;
 }
 .fixed-center {
     position: fixed !important;
@@ -152,10 +154,10 @@ label[for="DateFormat"] > span::before {
     text-align: center;
 }
 label[for="DateFormat"] > span:first-of-type {
-    margin-left: 4px;
+    margin-left: 6px;
 }
 label[for="DateFormat"] > span:last-of-type {
-    margin-right: 4px;
+    margin-right: 6px;
 }
 #DateFormat {
     -webkit-appearance: none;
@@ -171,10 +173,10 @@ label[for="DateFormat"] > span:last-of-type {
 }
 #DateFormat::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: calc(1.5em + 4px);
-    height: calc(1.5em + 4px);
+    width: 36px;
+    height: 36px;
     border: 1px solid var(--data-fmt-br);
-    border-radius: 1em;
+    border-radius: 50%;
 }
 .container {
     width: 100%;
@@ -191,7 +193,6 @@ label[for="DateFormat"] > span:last-of-type {
     padding-top: 2em;
     border: 1px solid var(--list-br);
     background-image: var(--list-bg);
-    /* background-image: linear-gradient(45deg, black, transparent); */
     border-left: none;
 }
 #tasks-list::before {
@@ -206,7 +207,7 @@ label[for="DateFormat"] > span:last-of-type {
 #tasks-list *[data-task-name] {
     --list-level: 0;
     line-height: 2;
-    height: 2em;
+    height: 1.75em;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -241,7 +242,7 @@ label[for="DateFormat"] > span:last-of-type {
 .task {
     min-width: var(--show-width);
     max-width: var(--show-width);
-    border: 1px solid #000;
+    border: 1px solid #999;
     border-left-width: 0;
     box-sizing: border-box;
     background-color: inherit;
@@ -254,7 +255,7 @@ label[for="DateFormat"] > span:last-of-type {
     width: var(--show-width);
     line-height: 2;
     text-align: center;
-    box-shadow: 0px 0px 0 1px #000;
+    box-shadow: 0px 0px 0 1px #999;
 }
 .task-fill {
     height: 100%;
@@ -434,10 +435,13 @@ label[for="DateFormat"] > span:last-of-type {
     --task-bar-left: 0;
     --task-bar-right: 0;
     z-index: 1;
-    outline: 1px solid #000;
-    height: 2em;
+    /* outline: 1px solid #000; */
+    box-shadow: 0 0 0 1px #e4e;
+    height: 1em;
     position: absolute;
-    background: #0a0;
+    background: #e1e8ee;
+    margin: .25em;
+    border-radius: 1em;
     width: calc(var(--show-width) * (var(--task-bar-right) - var(--task-bar-left)) - 1px);
     margin-left: calc(var(--show-width) * var(--task-bar-left));
 }
@@ -457,11 +461,11 @@ label[for="DateFormat"] > span:last-of-type {
 }
 #increase {
     right: 30px;
-    bottom: 8.5em;
+    bottom: 6.5em;
 }
 #decrease {
     right: 30px;
-    bottom: 5.5em;
+    bottom: 4.5em;
 }
 .plus-button, .minus-button, .left-arrow, .right-arrow {
     position: fixed;

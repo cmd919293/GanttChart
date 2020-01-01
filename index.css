@@ -470,7 +470,13 @@ label[for="DateFormat"] > span:last-of-type {
     margin-left: calc(var(--show-width) * var(--task-bar-left));
 }
 .task-finish {
-    background-color: #0ffff0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.25) 3px,
+      #ffffff00 3px,
+      #ffffff00 8px
+    );
 }
 #ShowTaskSide, #AddTaskPad {
     position: fixed;

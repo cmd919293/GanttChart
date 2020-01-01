@@ -690,7 +690,7 @@ function TaskController() {
         cancel.classList.add('task-btn');
         reset.classList.add('task-btn');
         apply.textContent = "Apply";
-        cancel.textContent = "Cancel";
+        cancel.textContent = "Delete";
         reset.textContent = "Reset";
         let dict = [
             ['Name', 'input', {type: 'text', required: 'true'}],
@@ -709,7 +709,12 @@ function TaskController() {
             inputs[a[0]] = ele;
             return label;
         });
-        rm.addEventListener('click', function(e) {
+        btnList.append(apply, cancel, reset);
+        inputs.End.min = inputs.Start.value;
+        dict[1].querySelector('input[type="date"]').addEventListener('change', function(e) {
+            dict[2].querySelector('input[type="date"]').min = this.value;
+        });
+        cancel.addEventListener('click', function(e) {
             setTimeout(function() {
                 if (confirm("Are you sure you want to delete this task")) {
                     self.db.Delete(pad.dataset['index']);
@@ -718,11 +723,6 @@ function TaskController() {
                 }
             }, 0);
         });
-        dict[1].querySelector('input[type="date"]').addEventListener('change', function(e) {
-            dict[2].querySelector('input[type="date"]').min = this.value;
-        });
-        btnList.append(apply, cancel, reset);
-        inputs.End.min = inputs.Start.value;
         apply.addEventListener('click', function() {
             if (pad.checkValidity()) {
                 let origin = self.db.GetDataById(rm.parentElement.dataset['index']);
@@ -740,7 +740,7 @@ function TaskController() {
                 pad.reportValidity();
             }
         });
-        cancel.addEventListener('click', function() {
+        rm.addEventListener('click', function() {
             div.remove();
         });
         reset.addEventListener('click', function() {
@@ -766,7 +766,7 @@ function TaskController() {
             wh = Math.max(document.documentElement.offsetHeight, window.innerHeight);
         let menu = document.createElement('div');
         let finish = document.createElement('span');
-        finish.textContent = "Finish";
+        finish.textContent = task.finish ? "Undone": "Finish";
         let edit = document.createElement('span');
         edit.textContent = "Edit";
         edit.addEventListener('click', function () {

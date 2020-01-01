@@ -170,7 +170,7 @@ label[for="DateFormat"] {
 }
 label[for="DateFormat"] > span::before {
     width: 1em;
-    content: attr(date-text);
+    content: attr(data-text);
     display: inline-block;
     text-align: center;
 }
@@ -500,7 +500,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: var(--btn-bg);
     z-index: 1;
 }
-.plus-button:active, .minus-button:active, .left-arrow:active, .right-arrow:active {
+.plus-button:active, .minus-button:active, .left-arrow:active, .right-arrow:active, label[for='openFile']:active, #saveFile:active, #DateFormatBtn > *:active {
     background-color: #b8b8b8;
 }
 .plus-button:focus, .minus-button:focus, .left-arrow:focus, .right-arrow:focus {
@@ -601,4 +601,28 @@ label[for='openFile'], #saveFile {
 }
 #saveFile {
     bottom: 10em;
+}
+#DateFormatBtn > *::before {
+    content: attr(data-text);
+}
+#DateFormatBtn > * {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--btn-bg);
+    z-index: 1;
+    line-height: 40px;
+    text-align: center;
+    color: var(--btn-color);
+    right: 30px;
+    bottom: 12em;
+}
+#DateFormatBtn {
+    position: fixed;
+    width: 200px;
+    left: var(--list-width);
+    display: flex;
+    justify-content: space-around;
+    bottom: 8px;
 }

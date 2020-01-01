@@ -17,14 +17,17 @@
         <div class="left-arrow" id="ShowTaskSide"></div>
         <div class="plus-button" id="increase"></div>
         <div class="minus-button" id="decrease"></div>
-        <div class="align-right">
-            <label for="DateFormat">
-                <input type="range" id="DateFormat" min="0" max="2" value="0"/>
-                <span date-text="日"></span>
-                <span date-text="週"></span>
-                <span date-text="月"></span>
-            </label>
+        <div id="DateFormatBtn">
+            <span id="selectDate" data-text="日"></span>
+            <span id="selectWeek" data-text="週"></span>
+            <span id="selectMonth" data-text="月"></span>
         </div>
+        <!--label for="DateFormat">
+            <input type="range" id="DateFormat" min="0" max="2" value="0"/>
+            <span data-text="日"></span>
+            <span data-text="週"></span>
+            <span data-text="月"></span>
+        </label-->
         <label class="fas fa-file-import" title="Import File" for="openFile" data-text="Open"></label>
         <div class="fas fa-file-download" tille="Export File" id="saveFile" data-text="Save"></div>
     </div>

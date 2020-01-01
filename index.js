@@ -1077,7 +1077,7 @@ function DateController(taskController) {
         self.Type = self.db.type;
         self.Switch();
         self.Offset = view.firstElementChild.width * offset;
-        document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(type);
+        //document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(type);
     }
 
     Object.defineProperty(this, "Type", {
@@ -1116,10 +1116,20 @@ function DateController(taskController) {
 
     view.drag({axis: 'x', callback: Move});
 
-    document.getElementById('DateFormat').addEventListener('change', function(e) {
-        let x = ["date", "week", "month"][this.valueAsNumber];
-        self.Type = x;
+    document.getElementById('selectDate').addEventListener('click', function(e) {
+        self.Type = "date";
     });
+    document.getElementById('selectWeek').addEventListener('click', function(e) {
+        self.Type = "week";
+    });
+    document.getElementById('selectMonth').addEventListener('click', function(e) {
+        self.Type = "month";
+    });
+
+    //document.getElementById('DateFormat').addEventListener('change', function(e) {
+    //    let x = ["date", "week", "month"][this.valueAsNumber];
+    //    self.Type = x;
+    //});
 
     window.addEventListener('resize', ()=>Update());
 
@@ -1182,7 +1192,7 @@ addEventListener('load', function() {
                 let r = JSON.parse(this.result);
                 data.Load(r);
                 let x = data.offset;
-                document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(date.Type = data.type);
+                //document.getElementById('DateFormat').value = ["date", "week", "month"].indexOf(date.Type = data.type);
                 date.Switch(data.date);
                 date.Offset *= -x;
                 task.List();

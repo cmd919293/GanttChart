@@ -439,6 +439,9 @@ label[for="DateFormat"] > span:last-of-type {
     width: calc(var(--show-width) * (var(--task-bar-right) - var(--task-bar-left)) - 1px);
     margin-left: calc(var(--show-width) * var(--task-bar-left));
 }
+.task-finish {
+    background-color: #0ffff0;
+}
 #ShowTaskSide, #AddTaskPad {
     position: fixed;
     right: 30px;

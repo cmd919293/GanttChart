@@ -213,22 +213,31 @@ function Database() {
     }
 
     function Save(date) {
+        let tasks = [];
+        let temp = [];
+        temp.push(this.tree);
+        while (temp.length > 0) {
+            let t = temp.shift();
+            for (let i in t) {
+                temp.push(t[i]);
+                let task = this.GetDataById(i);
+                tasks.push({
+                    "id": task.id,
+                    "name": task.name,
+                    "start_time": task.start_time.toLocalISOString(),
+                    "end_time": task.end_time.toLocalISOString(),
+                    "description": task.description,
+                    "finish": task.finish || false,
+                    "pid": task.pid
+                });
+            }
+        }
         return JSON.stringify({
             "name": this.name,
             "date": date ? new Date(date) : new Date(),
             "type": this.type,
             "offset": this.offset,
-            "tasks": Object.entries(this.source).map(a => {
-                let x = a[1];
-                return ["id", "name", "start_time", "end_time", "description", "pid"].reduce((a, b)=>{
-                    if (x[b] instanceof Date) {
-                        a[b] = x[b].toLocalISOString();
-                    } else {
-                        a[b] = x[b];
-                    }
-                    return a;
-                }, {});
-            })
+            "tasks": tasks
         });
     }
 
@@ -244,6 +253,7 @@ function Database() {
             "end_time": t2,
             "min_date": t1,
             "max_date": t2,
+            "finish": task.finish,
             "description": task.description,
             "pid": pid
         }
@@ -254,7 +264,7 @@ function Database() {
         if (!this.GetDataById(id)) {
             let obj = create.call(this, task, id, task.pid || 0);
             Update.call(this, obj);
-            this.index = id + 1;
+            this.index = Math.max(this.index, id + 1);
         }
         return id;
     }
@@ -370,20 +380,21 @@ function Database() {
         return result;
     }
 
+    function Finish(id) {
+        //TODO
+    }
+
     function TaskTree() {
         let tasks = [];
-        let level = 0;
         let depth = 0;
-        function _(tree) {
-            level++;
+        function _(tree, level) {
             for (let i in tree) {
-                tasks.push([this.GetDataById(i), level - 1]);
+                tasks.push([this.GetDataById(i), level]);
                 depth = level > depth ? level : depth;
-                _.call(this, tree[i]);
+                _.call(this, tree[i], level + 1);
             }
-            level--;
         }
-        _.call(this, this.tree);
+        _.call(this, this.tree, 0);
         return [tasks, depth];
     }
 
@@ -549,6 +560,9 @@ function TaskController() {
         top = top.offsetTop - top.clientHeight - 2;
         let div = document.createElement('div');
         div.classList.add('task-bar');
+        if (task.finish) {
+            div.classList.add('task-finish');
+        }
         div.style.setProperty("--task-bar-left", position[0]);
         div.style.setProperty("--task-bar-right", position[1]);
         div.style.top = top + 'px';
@@ -758,14 +772,30 @@ function TaskController() {
         edit.addEventListener('click', function () {
             showEditWindow(task);
             menu.remove();
-        }, {once: true});
+        });
+        finish.addEventListener('click', function() {
+            task.finish = !task.finish;
+            let bar = document.querySelector(`.task-bar[data-index='${task.id}']`);
+            if (task.finish) {
+                bar.classList.add('task-finish');
+            } else {
+                bar.classList.remove('task-finish');
+            }
+            menu.remove();
+        });
         window.addEventListener('mousedown', function (e) {
             if (!e.path.includes(menu)) {
                 menu.remove();
             }
-        }, {once: true});
+        });
         menu.classList.add('contextmenu');
-        menu.append(finish, edit);
+        //let tasks = self.db.Query(function(t) {
+        //    return t.pid == task.id;
+        //});
+        //if (tasks.length == 0) {
+            menu.append(finish);
+        //}
+        menu.append(edit);
         document.body.append(menu);
         let rect = menu.getBoundingClientRect();
         let mw = rect.width, mh = rect.height;

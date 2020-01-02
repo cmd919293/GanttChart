@@ -210,6 +210,7 @@ function Database() {
         this.type = obj.type;
         this.offset = obj.offset;
         this.source = {};
+        this.tree = {};
         for (let i = 0; i < tasks.length; i++) {
             Insert.call(this, tasks[i]);
         }
@@ -1256,10 +1257,10 @@ addEventListener('load', function() {
             reader.addEventListener('load', function(){
                 let r = JSON.parse(this.result);
                 data.Load(r);
+                task.List();
                 let x = data.offset;
                 date.Switch(data.date);
                 date.Offset *= -x;
-                task.List();
             });
             reader.readAsText(file[0]);
         }

@@ -189,7 +189,6 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: transparent;
 }
 #DateFormat:focus {
-    /*box-shadow: 0 0 0 1px rgb(77 , 144, 254);*/
     outline: none;
 }
 #DateFormat::-webkit-slider-thumb {
@@ -216,16 +215,7 @@ label[for="DateFormat"] > span:last-of-type {
     background-image: var(--list-bg);
     border-left: none;
     border-right: none;
-    z-index: 1;
-}
-#tasks-list::before {
-    content: "";
-    position: fixed;
-    background-color: inherit;
-    width: var(--list-width);
-    height: 2em;
-    margin-top: -2em;
-    /* box-shadow: 0px 0px 0 1px var(--list-br); */
+    z-index: 0;
 }
 #tasks-list *[data-task-name] {
     --list-level: 0;
@@ -237,13 +227,10 @@ label[for="DateFormat"] > span:last-of-type {
     padding-right: .5em;
     padding-left: 1em;
     background-color: var(--list-name-bg);
-    /* outline: 1px solid #fff; */
     box-shadow: 0 1px 0 0px #fff;
     margin-top: 1px;
     box-sizing: border-box;
     text-indent: calc(20px * var(--list-level));
-    /*text-align: center;*/
-    /*background-color: hsl(calc(360 * var(--list-level) / var(--list-depth)), 100%, 75%);*/
 }
 #tasks-list *[data-task-name]::before {
     content: attr(data-task-name);
@@ -279,7 +266,6 @@ label[for="DateFormat"] > span:last-of-type {
     width: var(--show-width);
     line-height: 2;
     text-align: center;
-    /* box-shadow: 0 -1px 0 1px #999; */
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -293,7 +279,6 @@ label[for="DateFormat"] > span:last-of-type {
 #task-side {
     min-width: 0;
     max-width: 0;
-    /* border: 0 solid var(--side-br); */
     background-color: var(--side-bg);
     padding: var(--side-pd) 0;
     position: fixed;
@@ -318,7 +303,6 @@ label[for="DateFormat"] > span:last-of-type {
 .task-pad {
     padding-bottom: 1em;
     margin-bottom: var(--side-pd);
-    /* border: 1px solid var(--task-pad-br); */
     background-color: var(--task-pad-bg);
     width: var(--task-pad-size);
     position: relative;
@@ -450,7 +434,6 @@ label[for="DateFormat"] > span:last-of-type {
     float: left;
     width: 2em;
     height: 2em;
-    /* border-right: 1px solid #000; */
     cursor: move;
     background: rgba(238, 68, 238, 0.5);
 }
@@ -469,7 +452,6 @@ label[for="DateFormat"] > span:last-of-type {
     --task-bar-left: 0;
     --task-bar-right: 0;
     z-index: 1;
-    /* outline: 1px solid #000; */
     box-shadow: 0 0 5px 1px #e4e;
     height: 1em;
     position: absolute;
@@ -520,7 +502,6 @@ label[for="DateFormat"] > span:last-of-type {
     background-color: #b8b8b8;
 }
 .plus-button:focus, .minus-button:focus, .left-arrow:focus, .right-arrow:focus {
-    /*box-shadow: 0 0 0 1px rgb(77 , 144, 254);*/
     outline: none;
 }
 .plus-button::before, .plus-button::after, .minus-button::before, .minus-button::after, .left-arrow::before, .left-arrow::after, .right-arrow::before, .right-arrow::after {
@@ -653,10 +634,18 @@ label[for='openFile'], #saveFile {
     bottom: 8px;
 }
 .task-bar > div {
+    --line-left: 0;
+    --line-right: 0;
+    --right-shift: 0;
+    --extent-size: 0;
+    --extent-shift: 0;
     position: absolute;
     border-style: solid;
     border-color: #f0f;
     border-width: 0;
+    right: calc(var(--right-shift) * var(--show-width) + var(--extent-shift) * 1px);
+    width: calc((var(--line-right) - var(--line-left)) * var(--show-width) + var(--extent-size) * 1px);
+    top: 50%;
 }
 .task-bar > div::before, .task-bar > div::after {
     display: block;
@@ -674,4 +663,25 @@ label[for='openFile'], #saveFile {
 .task-bar > div::before {
     left: -3px;
     top: -3px;
+}
+.task-bar > div.mirror::before {
+    right: -3px;
+    left: auto;
+}
+.task-bar > div.mirror::after {
+    left: -3px;
+    right: auto;
+}
+#project-name {
+    position: absolute;
+    font-size: 24px;
+    left: 0;
+    top: 0;
+    border: none;
+    width: var(--list-width);
+    background: #0000;
+    height: 2em;
+    line-height: 2;
+    outline: none;
+    padding-left: 12px;
 }

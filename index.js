@@ -168,7 +168,7 @@ Date.prototype.addMinutes = function(value) {
 Date.prototype.toLocalISOString = function() {
     return this.addMinutes(-this.getTimezoneOffset()).toISOString();
 }
-Date.prototype.Equal = function(value) {
+Date.prototype.equal = function(value) {
     return this.getTime() == value.getTime();
 }
 
@@ -472,14 +472,14 @@ function TaskController() {
             return label;
         });
         rm.addEventListener('click', function(e) {
-            rm.parentElement.classList.add('fixed-center');
-            setTimeout(function() {
-                if (confirm("Are you sure you want to delete this task")) {
+            //rm.parentElement.classList.add('fixed-center');
+            //setTimeout(function() {
+                //if (confirm("Are you sure you want to delete this task")) {
                     rm.parentElement.remove();
-                } else {
-                    rm.parentElement.classList.remove('fixed-center');
-                }
-            }, 0);
+                //} else {
+                //    rm.parentElement.classList.remove('fixed-center');
+                //}
+            //}, 0);
         });
         dict[1].querySelector('input[type="date"]').addEventListener('change', function(e) {
             dict[2].querySelector('input[type="date"]').min = this.value;
@@ -555,8 +555,7 @@ function TaskController() {
         let bars = document.querySelectorAll('.task-bar');
         for (let i = 0; i < bars.length; i++) {
             let bar = bars[i];
-            let shiftSize = bar.height / 2;
-            let size = bar.parentElement.parentElement.width;
+            let shiftSize = Math.min(bar.height / 2, bar.width / 2);
             let id = parseInt(bar.dataset['index']);
             let curr = self.db.GetDataById(id);
             let tasks = self.db.Query(function (task) {
@@ -569,36 +568,54 @@ function TaskController() {
                 let task = tasks[j];
                 let taskTag = document.querySelector(`span:not(.task-bar)[data-index='${task.id}']`);
                 let taskCen = getCenter(taskTag);
-                let border = ["borderLeftWidth"];
+                let border = {};
                 let p_pos = clamp(curr.start_time, curr.end_time, task.start_time);
                 let c_pos = clamp(task.start_time, task.end_time, curr.start_time);
                 let position = [];
                 if (c_pos < p_pos){
-                    border.push("borderTopWidth");
                     position = dateCtrl.computeScaler(c_pos, p_pos);
                 } else {
-                    border.push("borderBottomWidth");
                     position = dateCtrl.computeScaler(p_pos, c_pos);
                 }
-                let width = (position[1] - position[0]) * size;
-                border.forEach(a => div.style[a] = "1px");
-                let temp = dateCtrl.computeScaler(curr.start_time, p_pos);
-                let shift = (temp[1] - temp[0]) * size ;
-                if (p_pos.Equal(curr.start_time)) {
-                    shift += shiftSize;
-                } else if (p_pos.Equal(curr.end_time)) {
-                    shift -= shiftSize;
-                    width += shiftSize;
-                } else if (c_pos.Equal(task.start_time)) {
-                    shift += shiftSize;
-                }
-                if (c_pos.Equal(task.start_time) && width > 0) {
-                    width += shiftSize;
-                }
-                div.style.left = `${shift}px`;
-                div.style.width = `${width}px`;
+                let p_shift = dateCtrl.computeScaler(p_pos, curr.end_time);
+                let c_shift = dateCtrl.computeScaler(c_pos, task.end_time);
+
                 div.style.height = `${taskCen - currCen}px`;
-                div.style.top = `${shiftSize}px`;
+                div.style.setProperty("--right-shift", p_shift[1] - p_shift[0]);
+                div.style.setProperty("--line-left", position[0]);
+                div.style.setProperty("--line-right", position[1]);
+                let shift = 0, size = 0;
+                if (p_pos.equal(curr.start_time)) {
+                    shift -= shiftSize;
+                    size += shiftSize;
+                    border["borderLeftWidth"] = null;
+                    if (c_pos.equal(task.end_time)) {
+                        border["borderTopWidth"] = null;
+                        div.classList.add('mirror');
+                        size += shiftSize;
+                    } else {
+                        size -= shiftSize;
+                    }
+                } else if (p_pos.equal(curr.end_time)) {
+                    div.style.transform = "translateX(100%)";
+                    size += shiftSize;
+                    shift += shiftSize;
+                    border["borderLeftWidth"] = null;
+                    border["borderBottomWidth"] = null;
+                    if (c_pos.equal(task.start_time)) {
+                        size += shiftSize;
+                    }
+                } else {
+                    border["borderLeftWidth"] = null;
+                    if (c_pos.equal(task.start_time)) {
+                        shift -= shiftSize;
+                    }
+                }
+                for (let x in border) {
+                    div.style[x] = '1px';
+                }
+                div.style.setProperty("--extent-shift", shift);
+                div.style.setProperty("--extent-size", size);
                 bar.append(div);
             }
         }
@@ -685,7 +702,7 @@ function TaskController() {
             let tasks = self.db.Query(function(task) {
                let t1 = task.start_time;
                let t2 = task.end_time;
-               return t1 < st && (t2 > ed || (st < t2 && !t1.Equal(t2)));
+               return t1 < st && (t2 > ed || (st < t2 && !t1.equal(t2)));
             });
             for (let i = 0; i < tasks.length; i++) {
                 let task = tasks[i];
@@ -702,10 +719,10 @@ function TaskController() {
             let tasks = self.db.Query(function(task) {
                 let t1 = task.start_time;
                 let t2 = task.end_time;
-                if (st.Equal(t1) && t1.Equal(t2)) {
+                if (st.equal(t1) && t1.equal(t2)) {
                     return true;
                 } else {
-                    return st < t2 && t2 <= ed && !t1.Equal(t2);
+                    return st < t2 && t2 <= ed && !t1.equal(t2);
                 }
             });
             for (let i = 0; i < tasks.length; i++) {
@@ -730,7 +747,7 @@ function TaskController() {
     }
 
     function List() {
-        document.title = this.db.name;
+        document.getElementById('project-name').value = document.title = this.db.name;
         tasks.innerHTML = "";
         let info = this.db.TaskTree();
         let c = 0;
@@ -918,6 +935,10 @@ function TaskController() {
             self.db.Insert(data);
             self.Redraw();
         }
+    });
+
+    document.getElementById('project-name').addEventListener('input', function (e) {
+        document.title = self.db.name = this.value;
     });
 
     document.getElementById('task-side').addEventListener('wheel', function (e) {
